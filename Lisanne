@@ -40,7 +40,7 @@ mbased_finite_apollo <- list(
 
 ################MAKE SEPERATE DATSETS FROM THE SIMULATED DATA#####################
 
-#MCAR DATASETS################## 
+# MCAR DATASETS ################## 
 
 #imputes missing data using 'complete' function
 MCAR_imputed <- furrr::future_map(mbased_finite_apollo$MCAR, ~ complete(.x, action = "broad"))
@@ -66,7 +66,8 @@ create_MCAR_dfs <- function(MCAR_imputed){
 Imputed_Dataframes_MCAR <- create_MCAR_dfs(MCAR_imputed)
 
 
-#MAR DATASETS##################
+# MAR DATASETS ##################
+
 #imputes missing data using 'complete' function
 MAR_imputed <- furrr::future_map(mbased_finite_apollo$MAR, ~ complete(.x, action = "broad"))
 
@@ -90,6 +91,9 @@ create_MAR_dfs <- function(MAR_imputed){
 
 Imputed_Dataframes_MAR <- create_MAR_dfs(MAR_imputed)
 
-################SOCIAL NETWORK ANALYSIS (PREFERABLE REM)#######################
+################ SOCIAL NETWORK ANALYSIS (PREFERABLE REM) #######################
+
+
+################ POOL THE ANALYSIS ############################################
 
 ##################################END###############################################
