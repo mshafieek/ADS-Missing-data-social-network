@@ -1,1 +1,38 @@
+library(mice)     # for imputation and amputation
+library(purrr)    # for functional programming
+library(furrr)    # for functional futures
+library(mvtnorm)  # for multivariate normal data
+library(magrittr) # for pipes
+library(dplyr)    # for data manipulation
+library(tibble)   # for tibbles
+library(relevent)
+library(Epi)
 
+
+
+#IMPUTE MISSING DATA WITH AMPUTE() AND FILL THE HOLES WITH MICE()
+
+# Make a tibble from the apollo dataset
+Apollo_tibble <- as_tibble(PartOfApollo_13)
+
+#Model-based finite populations
+mbased_finite_apollo <- list(
+  MCAR = furrr::future_map(1:3, ~ { # map over 3 sims
+    Apollo_tibble %>% 
+      ampute(prop = .5, 
+             mech = "MCAR") %>% .$amp %>% 
+      mice(m = 5, 
+           maxit = 5,
+           method = "norm",
+           print = F)
+  }, .options = furrr_options(seed = 123)),
+  MAR = furrr::future_map(1:3, ~ { # map over 3 sims
+    Apollo_tibble %>% 
+      ampute(prop = .5, 
+             mech = "MAR", type = "RIGHT") %>% .$amp %>% 
+      mice(m = 5, 
+           maxit = 5,
+           method = "norm",
+           print = F)
+  }, .options = furrr_options(seed = 123))
+)
