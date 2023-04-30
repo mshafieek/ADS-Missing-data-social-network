@@ -10,29 +10,85 @@ library(Epi)
 
 
 
-#IMPUTE MISSING DATA WITH AMPUTE() AND FILL THE HOLES WITH MICE()
+################impute missing data and fill in############################
 
 # Make a tibble from the apollo dataset
 Apollo_tibble <- as_tibble(PartOfApollo_13)
 
-#Model-based finite populations
+#Model-based finite populations (MCAR / MAR)
 mbased_finite_apollo <- list(
   MCAR = furrr::future_map(1:3, ~ { # map over 3 sims
     Apollo_tibble %>% 
-      ampute(prop = .5, 
-             mech = "MCAR") %>% .$amp %>% 
+      ampute(prop = .2, 
+             mech = "MCAR", patterns = c(1,1,0)) %>% .$amp %>% 
       mice(m = 5, 
            maxit = 5,
-           method = "norm",
+           method = "pmm",
            print = F)
-  }, .options = furrr_options(seed = 123)),
+  }  , .options = furrr_options(seed = 123)),
   MAR = furrr::future_map(1:3, ~ { # map over 3 sims
     Apollo_tibble %>% 
-      ampute(prop = .5, 
-             mech = "MAR", type = "RIGHT") %>% .$amp %>% 
+      ampute(prop = .2, 
+             mech = "MAR", patterns = c(1,1,0), type = "RIGHT") %>% .$amp %>% 
       mice(m = 5, 
            maxit = 5,
-           method = "norm",
+           method = "pmm",
            print = F)
   }, .options = furrr_options(seed = 123))
 )
+
+
+################MAKE SEPERATE DATSETS FROM THE SIMULATED DATA#####################
+
+#MCAR DATASETS################## 
+
+#imputes missing data using 'complete' function
+MCAR_imputed <- furrr::future_map(mbased_finite_apollo$MCAR, ~ complete(.x, action = "broad"))
+
+#Creates data frames from imputed data MCAR
+create_MCAR_dfs <- function(MCAR_imputed){
+  
+  MCAR_dfs_list <- list()
+  
+  for(i in seq_along(MCAR_imputed)){
+    temp_df <- MCAR_imputed[[i]]
+    MCAR_dfs_list[[i]] <- list(MCAR_df_1 = temp_df[, grep("\\.1$", colnames(temp_df))],
+                               MCAR_df_2 = temp_df[, grep("\\.2$", colnames(temp_df))],
+                               MCAR_df_3 = temp_df[, grep("\\.3$", colnames(temp_df))],
+                               MCAR_df_4 = temp_df[, grep("\\.4$", colnames(temp_df))],
+                               MCAR_df_5 = temp_df[, grep("\\.5$", colnames(temp_df))])
+  }
+  
+  return(MCAR_dfs_list)
+  
+}
+
+Imputed_Dataframes_MCAR <- create_MCAR_dfs(MCAR_imputed)
+
+
+#MAR DATASETS##################
+#imputes missing data using 'complete' function
+MAR_imputed <- furrr::future_map(mbased_finite_apollo$MAR, ~ complete(.x, action = "broad"))
+
+#Creates data frames from imputed data MAR
+create_MAR_dfs <- function(MAR_imputed){
+  
+  MAR_dfs_list <- list()
+  
+  for(i in seq_along(MAR_imputed)){
+    temp_df <- MAR_imputed[[i]]
+    MAR_dfs_list[[i]] <- list(MAR_df_1 = temp_df[, grep("\\.1$", colnames(temp_df))],
+                               MAR_df_2 = temp_df[, grep("\\.2$", colnames(temp_df))],
+                               MAR_df_3 = temp_df[, grep("\\.3$", colnames(temp_df))],
+                               MAR_df_4 = temp_df[, grep("\\.4$", colnames(temp_df))],
+                               MAR_df_5 = temp_df[, grep("\\.5$", colnames(temp_df))])
+  }
+  
+  return(MAR_dfs_list)
+  
+}
+
+Imputed_Dataframes_MAR <- create_MAR_dfs(MAR_imputed)
+
+
+##################################END###############################################
