@@ -1,0 +1,82 @@
+```{r}
+set.seed(123)
+```
+
+
+```{r}
+##### Load data
+load("UUsummerschool.rdata")
+
+apollo <- as_tibble(PartOfApollo_13)
+```
+
+
+```{r}
+##### Model-based finite populations
+mbased_finite_apollo <- list(
+  MCAR = furrr::future_map(3, ~ { # map over 3 sims
+    apollo %>% 
+      ampute(prop = .5, 
+             mech = "MCAR",
+             patterns = c(1,0,0)) %>% .$amp %>%
+      mice(m = 5, 
+           maxit = 5,
+           method = "pmm",
+           print = F)
+  }, .options = furrr_options(seed = 123)),
+  MAR = furrr::future_map(3, ~ { # map over 3 sims
+    apollo %>% 
+      ampute(prop = .5, 
+             mech = "MAR", 
+             patterns = c(1,0,0),
+             type = "RIGHT") %>% .$amp %>% 
+      mice(m = 5, 
+           maxit = 5,
+           method = "pmm",
+           print = F)
+  }, .options = furrr_options(seed = 123))
+)
+```
+
+```{r}
+##### complete datasets MCAR
+Completed_MCAR <- furrr:::future_imap(mbased_finite_apollo$MCAR, ~ complete(.x, action = "broad"))
+
+##### complete datasets MAR
+Completed_MAR <- furrr:::future_imap(mbased_finite_apollo$MAR, ~ complete(.x, action = "broad"))
+```
+
+
+```{r}
+##### split Completed_MCAR into a list of dataframes
+
+MCAR_df_list <- lapply(1:5, function(i) {
+  cols <- c(paste0("time.", i), paste0("sender.", i), paste0("receiver.", i))
+  Completed_MCAR[[1]][, cols]
+})
+
+
+
+##### split Completed_MAR into a list of dataframes
+MAR_df_list <- lapply(1:5, function(i) {
+  cols <- c(paste0("time.", i), paste0("sender.", i), paste0("receiver.", i))
+  Completed_MAR[[1]][, cols]
+})
+```
+
+
+```{r}
+##### REM on original data
+True <- rem.dyad(as.data.frame(apollo), n=19,effects = c("PSAB-BA"), ordinal = TRUE, hessian = TRUE)
+```
+
+
+
+```{r}
+##### REM on MCAR
+REM_MCAR <- list()
+for (i in seq_along(MCAR_df_list)){
+ REM <- rem.dyad(as.data.frame(MCAR_df_list[i]), n=19,effects = c("PSAB-BA"), ordinal = TRUE, hessian = TRUE)
+  REM_MCAR[[i]] <- REM
+}
+```
