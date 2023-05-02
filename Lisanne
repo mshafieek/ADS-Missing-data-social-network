@@ -93,6 +93,67 @@ Imputed_Dataframes_MAR <- create_MAR_dfs(MAR_imputed)
 
 ################ SOCIAL NETWORK ANALYSIS (PREFERABLE REM) #######################
 
+############# build the real Apollo Network
+edges<-data.frame(from=c(as.character(PartOfApollo_13[,2])),to=c(as.character(PartOfApollo_13[,3])))
+
+Apollo<-graph_from_data_frame(edges,directed = TRUE)
+co <- components(Apollo)
+Apollo_network <- induced.subgraph(Apollo, which(co$membership == which.max(co$csize))) #use only the largest component for analysis
+summary(Apollo_network)
+
+#function to visualize the real network (with interaction)
+set.seed(100)
+Apollo_interactive_layout<-visNetwork(data.frame(id=V(Apollo_network)$name), edges, main = "Apollo",submain="Can zoom in/out to check the IDs and ties") %>%
+  visIgraphLayout(layout = "layout_nicely",smooth =  FALSE) %>%
+  visNodes(shape="circle",label = TRUE) %>% 
+  visOptions(highlightNearest = list(enabled = T, hover = T), nodesIdSelection = T)
+
+Apollo_interactive_layout 
+
+########## calculate centrality measures
+
+#function to calculate centrality metrics
+find_highest_centrality <- function(graph){
+  
+  # highest degree
+  degree <- degree(graph, mode = "all")
+  node_degree <- V(graph)$name[which.max(degree)]
+  
+  # highest betweenness
+  betweenness <- betweenness(graph, normalized = TRUE)
+  node_betweenness <- V(graph)$name[which.max(betweenness)]
+  
+  # highest closeness
+  closeness <- closeness(graph, mode = "all")
+  node_closeness <- V(graph)$name[which.max(closeness)]
+  
+  # highest eigenvector
+  eigen_centrality <- eigen_centrality(graph)$vector
+  node_eigen <- V(graph)$name[which.max(eigen_centrality)]
+  
+  # combine results
+  cat("highest degree is node: ", node_degree, "\n")
+  cat("highest betweenness is node: ", node_betweenness, "\n")
+  cat("highest closeness is node: ", node_closeness, "\n")
+  cat("highest eigenvector is node: ", node_eigen, "\n")
+}
+
+find_highest_centrality(Apollo_network)
+
+############# Make variable inertia 
+
+#calculate inertia 
+inertia <- inertiaStat(PartOfApollo_13, PartOfApollo_13$time, PartOfApollo_13$sender, 
+            PartOfApollo_13$receiver, halflife = 10)
+
+#add variable to apollo dataframe
+PartOfApollo_13$inertia <- inertia
+
+
+############ first rem analyis
+
+Apollo1 <- rem.dyad(PartOfApollo_13,n=16, effects = c("inertia"), ordinal =
+                       TRUE, hessian = TRUE)
 
 ################ POOL THE ANALYSIS ############################################
 
