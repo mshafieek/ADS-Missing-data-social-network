@@ -150,10 +150,19 @@ inertia <- inertiaStat(PartOfApollo_13, PartOfApollo_13$time, PartOfApollo_13$se
 PartOfApollo_13$inertia <- inertia
 
 
-############ first rem analyis
+############ first rem analyis of the TRUE Apollo network
 
-Apollo1 <- rem.dyad(PartOfApollo_13,n=16, effects = c("inertia"), ordinal =
-                       TRUE, hessian = TRUE)
+Model_1_true <- rem.dyad(as.data.frame(Apollo_tibble), n=19,effects = c("PSAB-BA"), ordinal = TRUE, hessian = TRUE)
+
+Model_2_true <- rem.dyad(as.data.frame(Apollo_tibble), n=19,effects = c("PSAB-BA", "NIDSnd"), ordinal = TRUE, hessian = TRUE)
+
+Model_3_true <- rem.dyad(as.data.frame(Apollo_tibble), n=19,effects = c("PSAB-BA", "NIDSnd", "NODRec"), ordinal = TRUE, hessian = TRUE)
+
+summary(Model_1)
+
+summary(Model_2)
+
+summary(Model_3)
 
 ################ POOL THE ANALYSIS ############################################
 
