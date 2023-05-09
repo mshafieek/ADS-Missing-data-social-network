@@ -37,46 +37,14 @@ mbased_finite_apollo <- list(
   }, .options = furrr_options(seed = 123))
 )
 ```
-
+###### REM analysis on completed data sets of MCAR and MAR
 ```{r}
-##### complete datasets MCAR
-Completed_MCAR <- furrr:::future_imap(mbased_finite_apollo$MCAR, ~ complete(.x, action = "broad"))
-
-##### complete datasets MAR
-Completed_MAR <- furrr:::future_imap(mbased_finite_apollo$MAR, ~ complete(.x, action = "broad"))
-```
-
-
-```{r}
-##### split Completed_MCAR into a list of dataframes
-
-MCAR_df_list <- lapply(1:5, function(i) {
-  cols <- c(paste0("time.", i), paste0("sender.", i), paste0("receiver.", i))
-  Completed_MCAR[[1]][, cols]
-})
-
-
-
-##### split Completed_MAR into a list of dataframes
-MAR_df_list <- lapply(1:5, function(i) {
-  cols <- c(paste0("time.", i), paste0("sender.", i), paste0("receiver.", i))
-  Completed_MAR[[1]][, cols]
-})
-```
-
-
-```{r}
-##### REM on original data
-True <- rem.dyad(as.data.frame(apollo), n=19,effects = c("PSAB-BA"), ordinal = TRUE, hessian = TRUE)
-```
-
-
-
-```{r}
-##### REM on MCAR
-REM_MCAR <- list()
-for (i in seq_along(MCAR_df_list)){
- REM <- rem.dyad(as.data.frame(MCAR_df_list[i]), n=19,effects = c("PSAB-BA"), ordinal = TRUE, hessian = TRUE)
-  REM_MCAR[[i]] <- REM
-}
+results <- mbased_finite_apollo %>% 
+  map(~.x %>% # for every missingness mechanism
+    map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>%
+        map(~.x %$%
+             rem.dyad(.x, n=19,effects = c("PSAB-BA", "NIDSnd", "NODRec"), ordinal = TRUE, hessian = TRUE) %>%
+              map(~map(., ~append(results, .)
+            )))))
 ```
