@@ -164,6 +164,25 @@ summary(Model_2)
 
 summary(Model_3)
 
+
+########## REM analysis of the imputed datasets
+
+# List of imputed datasets
+imputed_datasets <- Imputed_Dataframes_MCAR
+
+# Loop through imputed datasets and perform analysis on each dataset
+rem_results_list <- lapply(imputed_datasets, function(dataset) {
+  
+  # Perform REM analysis on current dataset
+  rem_result <- rem.dyad(as.data.frame(dataset), n=19, effects = c("PSAB-BA", "NIDSnd", "NODRec"), ordinal = TRUE, hessian = TRUE)
+  
+  # Save the results
+  return(rem_result)
+})
+
+# Print the list of REM analysis results for each dataset
+print(rem_results_list)
+
 ################ POOL THE ANALYSIS ############################################
 
 ##################################END###############################################
