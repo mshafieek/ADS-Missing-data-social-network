@@ -1,21 +1,107 @@
-library(mice)     # for imputation and amputation
-library(purrr)    # for functional programming
-library(furrr)    # for functional futures
-library(mvtnorm)  # for multivariate normal data
-library(magrittr) # for pipes
-library(dplyr)    # for data manipulation
-library(tibble)   # for tibbles
+---
+title: "Thesis missing data and relational event model"
+output: html_document
+date: "2023-05-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+## Libraries
+```{r}
+library(mice)     
+library(purrr)    
+library(furrr)    
+library(mvtnorm)  
+library(magrittr) 
+library(dplyr)    
+library(tibble)   
 library(relevent)
 library(Epi)
+library(ggplot2)
+library(sna)
+library(remify)
+library(RSiena)
+library(rem)
+library(survival)
+library(remstats)
+library(remify)
+library(igraph)
+library(visNetwork)
+```
+
+```{r}
+devtools::install_github("TilburgNetworkGroup/remstats@v3.1.0")
+devtools::install_github(repo = "TilburgNetworkGroup/remstimate")
+devtools::install_github("TilburgNetworkGroup/remify")
+```
+
+# Explore the data
+
+```{r}
+load("~/Master Applied Data Science/Thesis/Thesis/UUsummerschool.Rdata")
+str(PartOfApollo_13)
+summary(PartOfApollo_13)
+```
+## Visualize the network
+
+```{r}
+#build the network
+edges<-data.frame(from=c(as.character(PartOfApollo_13[,2])),to=c(as.character(PartOfApollo_13[,3])))
+Apollo<-graph_from_data_frame(edges,directed = TRUE)
+summary(Apollo)
+
+#function to visualize the real network (with interaction)
+set.seed(100)
+Apollo_interactive_layout<-visNetwork(data.frame(id=V(Apollo)$name), edges, main = "Apollo",submain="Can zoom in/out to check the IDs and ties") %>%
+  visIgraphLayout(layout = "layout_nicely",smooth =  FALSE) %>%
+  visNodes(shape="circle",label = TRUE) %>% 
+  visOptions(highlightNearest = list(enabled = T, hover = T), nodesIdSelection = T)
+
+Apollo_interactive_layout 
+```
 
 
+### Centrality measures
 
-################impute missing data and fill in############################
+```{r}
+#function to calculate centrality metrics
+find_highest_centrality <- function(graph){
+  
+  # highest degree
+  degree <- degree(graph, mode = "all")
+  node_degree <- V(graph)$name[which.max(degree)]
+  
+  # highest betweenness
+  betweenness <- betweenness(graph, normalized = TRUE)
+  node_betweenness <- V(graph)$name[which.max(betweenness)]
+  
+  # highest closeness
+  closeness <- closeness(graph, mode = "all")
+  node_closeness <- V(graph)$name[which.max(closeness)]
+  
+  # highest eigenvector
+  eigen_centrality <- eigen_centrality(graph)$vector
+  node_eigen <- V(graph)$name[which.max(eigen_centrality)]
+  
+  # combine results
+  cat("Highest degree is node: ", node_degree, "\n")
+  cat("Highest betweenness is node: ", node_betweenness, "\n")
+  cat("Highest closeness is node: ", node_closeness, "\n")
+  cat("Highest eigenvector is node: ", node_eigen, "\n")
+}
 
-# Make a tibble from the apollo dataset
+find_highest_centrality(Apollo)
+```
+# Missing Data Part
+
+## Impute missing data and fill in for 3 sims
+
+```{r ampute and impute for 3 sims}
+
 Apollo_tibble <- as_tibble(PartOfApollo_13)
 
-#Model-based finite populations (MCAR / MAR)
 mbased_finite_apollo <- list(
   MCAR = furrr::future_map(1:3, ~ { # map over 3 sims
     Apollo_tibble %>% 
@@ -37,152 +123,170 @@ mbased_finite_apollo <- list(
   }, .options = furrr_options(seed = 123))
 )
 
+```
 
-################MAKE SEPERATE DATSETS FROM THE SIMULATED DATA#####################
+## Single Amputation
 
-# MCAR DATASETS ################## 
+```{r single amputation}
+MCAR_single <- ampute(Apollo_tibble, prop = .2, 
+                      mech = "MCAR", patterns = c(1,1,0))
 
-#imputes missing data using 'complete' function
-MCAR_imputed <- furrr::future_map(mbased_finite_apollo$MCAR, ~ complete(.x, action = "broad"))
+head(MCAR_single$amp)
+```
 
-#Creates data frames from imputed data MCAR
-create_MCAR_dfs <- function(MCAR_imputed){
+## Analysis single amputation
+
+### How much missing points in receiver 
+```{r}
+ini <- mice(MCAR_single$amp, maxit = 0)
+ini$nmis
+```
+### Plot pattern missing data
+
+```{r}
+md.pattern(MCAR_single$amp)
+```
+### Flux plot
+```{r}
+fx <- fluxplot(MCAR_single$amp)
+```
+
+## Imputation missing values 
+
+```{r}
+MCAR_single_imp <- mice(MCAR_single$amp, m = 5, 
+                        maxit = 5,
+                        method = "pmm",
+                        print = F)
+
+# removing time as a predictor
+pred <- MCAR_single_imp$pred
+pred[ ,"time"] <- 0
+
+MCAR_single_imp <- mice(MCAR_single$amp, m=5, 
+                        maxit=5,
+                        pred=pred,  
+                        method = "pmm", 
+                        print=F)
+
+
+```
+
+```{r}
+# check if there are no loops
+MCAR_single_imp |>
+  complete("long") |>
+  summarize(all(sender != receiver))
+```
+
+### Inspect imputation
+```{r}
+bwplot(MCAR_single_imp)
+```
+
+
+### Density plot imputation receiver column
+```{r}
+densityplot(MCAR_single_imp, lwd = 3)
+```
+
+
+
+### Scatterplot: Impact of imputation method on sender and receiver in MCAR_single_imp.
+```{r}
+xyplot(MCAR_single_imp, receiver ~ sender | .imp)
+```
+
+# REM Part
+
+## REM on the original dataset
+
+### Actor-based model 
+
+```{r}
+colnames(PartOfApollo_13) <- c("time", "actor1", "actor2")
+
+reh<- remify::remify(edgelist = PartOfApollo_13, directed = TRUE, ordinal = TRUE, model = "actor")
+
+sender_effects <- ~ indegreeSender()
+
+receiver_effects <- ~ outdegreeReceiver() 
+
+out_actor <- remstats(sender_effects = sender_effects, receiver_effects = receiver_effects, reh = reh)
+
+print(out_actor)
+```
+
+### Tie based model 
+
+```{r}
+reh<- remify::remify(edgelist = PartOfApollo_13, directed = TRUE, ordinal = TRUE, model = "tie")
+
+effects_tie <- ~psABBA()
+
+out_tie <- remstats(tie_effects = effects_tie, reh = reh)
+
+print(out_tie)
+```
+
+### Fit the model 
+
+## REM on the imputed datasets
+
+### Actor based model 
+
+```{r}
+# Loop over all imputed datasets within MCAR_single_imp
+for (i in 1:5) {
+  # Select the i-th imputed dataset
+  dataset <- complete(MCAR_single_imp, i)
   
-  MCAR_dfs_list <- list()
+  # Convert the dataset to a data frame
+  dataset <- as.data.frame(dataset)
   
-  for(i in seq_along(MCAR_imputed)){
-    temp_df <- MCAR_imputed[[i]]
-    MCAR_dfs_list[[i]] <- list(MCAR_df_1 = temp_df[, grep("\\.1$", colnames(temp_df))],
-                               MCAR_df_2 = temp_df[, grep("\\.2$", colnames(temp_df))],
-                               MCAR_df_3 = temp_df[, grep("\\.3$", colnames(temp_df))],
-                               MCAR_df_4 = temp_df[, grep("\\.4$", colnames(temp_df))],
-                               MCAR_df_5 = temp_df[, grep("\\.5$", colnames(temp_df))])
-  }
+  # Set column names
+  colnames(dataset) <- c("time", "actor1", "actor2")
   
-  return(MCAR_dfs_list)
+  # Create the REM model
+  reh <- remify::remify(edgelist = dataset, directed = TRUE, ordinal = TRUE, model = "actor")
   
+  # Define the actor based effects
+  sender_effects <- ~ indegreeSender()
+  receiver_effects <- ~ outdegreeReceiver()
+  
+  # Calculate the effects using remstats
+  out_actor <- remstats(sender_effects = sender_effects, receiver_effects = receiver_effects, reh = reh)
+  
+  # Print results
+  print(out_actor)
 }
 
-Imputed_Dataframes_MCAR <- create_MCAR_dfs(MCAR_imputed)
+```
 
+### Tie based model 
 
-# MAR DATASETS ##################
-
-#imputes missing data using 'complete' function
-MAR_imputed <- furrr::future_map(mbased_finite_apollo$MAR, ~ complete(.x, action = "broad"))
-
-#Creates data frames from imputed data MAR
-create_MAR_dfs <- function(MAR_imputed){
+```{r}
+# Loop over all imputed datasets within MCAR_single_imp
+for (i in 1:5) {
+  # Select the i-th imputed dataset
+  dataset <- complete(MCAR_single_imp, i)
   
-  MAR_dfs_list <- list()
+  # Convert the dataset to a data frame
+  dataset <- as.data.frame(dataset)
   
-  for(i in seq_along(MAR_imputed)){
-    temp_df <- MAR_imputed[[i]]
-    MAR_dfs_list[[i]] <- list(MAR_df_1 = temp_df[, grep("\\.1$", colnames(temp_df))],
-                               MAR_df_2 = temp_df[, grep("\\.2$", colnames(temp_df))],
-                               MAR_df_3 = temp_df[, grep("\\.3$", colnames(temp_df))],
-                               MAR_df_4 = temp_df[, grep("\\.4$", colnames(temp_df))],
-                               MAR_df_5 = temp_df[, grep("\\.5$", colnames(temp_df))])
-  }
+  # Set column names
+  colnames(dataset) <- c("time", "actor1", "actor2")
   
-  return(MAR_dfs_list)
+  # Create the REM model
+  reh <- remify::remify(edgelist = dataset, directed = TRUE, ordinal = TRUE, model = "tie")
   
+  # Define the tie-based effects
+  tie_effects <- ~ psABBA()
+  
+  # Calculate the effects using remstats
+  out_tie <- remstats(tie_effects = tie_effects, reh = reh)
+  
+  # Print results
+  print(out_tie)
 }
 
-Imputed_Dataframes_MAR <- create_MAR_dfs(MAR_imputed)
-
-################ SOCIAL NETWORK ANALYSIS (PREFERABLE REM) #######################
-
-############# build the real Apollo Network
-edges<-data.frame(from=c(as.character(PartOfApollo_13[,2])),to=c(as.character(PartOfApollo_13[,3])))
-
-Apollo<-graph_from_data_frame(edges,directed = TRUE)
-co <- components(Apollo)
-Apollo_network <- induced.subgraph(Apollo, which(co$membership == which.max(co$csize))) #use only the largest component for analysis
-summary(Apollo_network)
-
-#function to visualize the real network (with interaction)
-set.seed(100)
-Apollo_interactive_layout<-visNetwork(data.frame(id=V(Apollo_network)$name), edges, main = "Apollo",submain="Can zoom in/out to check the IDs and ties") %>%
-  visIgraphLayout(layout = "layout_nicely",smooth =  FALSE) %>%
-  visNodes(shape="circle",label = TRUE) %>% 
-  visOptions(highlightNearest = list(enabled = T, hover = T), nodesIdSelection = T)
-
-Apollo_interactive_layout 
-
-########## calculate centrality measures
-
-#function to calculate centrality metrics
-find_highest_centrality <- function(graph){
-  
-  # highest degree
-  degree <- degree(graph, mode = "all")
-  node_degree <- V(graph)$name[which.max(degree)]
-  
-  # highest betweenness
-  betweenness <- betweenness(graph, normalized = TRUE)
-  node_betweenness <- V(graph)$name[which.max(betweenness)]
-  
-  # highest closeness
-  closeness <- closeness(graph, mode = "all")
-  node_closeness <- V(graph)$name[which.max(closeness)]
-  
-  # highest eigenvector
-  eigen_centrality <- eigen_centrality(graph)$vector
-  node_eigen <- V(graph)$name[which.max(eigen_centrality)]
-  
-  # combine results
-  cat("highest degree is node: ", node_degree, "\n")
-  cat("highest betweenness is node: ", node_betweenness, "\n")
-  cat("highest closeness is node: ", node_closeness, "\n")
-  cat("highest eigenvector is node: ", node_eigen, "\n")
-}
-
-find_highest_centrality(Apollo_network)
-
-############# Make variable inertia 
-
-#calculate inertia 
-inertia <- inertiaStat(PartOfApollo_13, PartOfApollo_13$time, PartOfApollo_13$sender, 
-            PartOfApollo_13$receiver, halflife = 10)
-
-#add variable to apollo dataframe
-PartOfApollo_13$inertia <- inertia
-
-
-############ first rem analyis of the TRUE Apollo network
-
-Model_1_true <- rem.dyad(as.data.frame(Apollo_tibble), n=19,effects = c("PSAB-BA"), ordinal = TRUE, hessian = TRUE)
-
-Model_2_true <- rem.dyad(as.data.frame(Apollo_tibble), n=19,effects = c("PSAB-BA", "NIDSnd"), ordinal = TRUE, hessian = TRUE)
-
-Model_3_true <- rem.dyad(as.data.frame(Apollo_tibble), n=19,effects = c("PSAB-BA", "NIDSnd", "NODRec"), ordinal = TRUE, hessian = TRUE)
-
-summary(Model_1)
-
-summary(Model_2)
-
-summary(Model_3)
-
-
-########## REM analysis of the imputed datasets
-
-# List of imputed datasets
-imputed_datasets <- Imputed_Dataframes_MCAR
-
-# Loop through imputed datasets and perform analysis on each dataset
-rem_results_list <- lapply(imputed_datasets, function(dataset) {
-  
-  # Perform REM analysis on current dataset
-  rem_result <- rem.dyad(as.data.frame(dataset), n=19, effects = c("PSAB-BA", "NIDSnd", "NODRec"), ordinal = TRUE, hessian = TRUE)
-  
-  # Save the results
-  return(rem_result)
-})
-
-# Print the list of REM analysis results for each dataset
-print(rem_results_list)
-
-################ POOL THE ANALYSIS ############################################
-
-##################################END###############################################
