@@ -1,50 +1,131 @@
 ```{r}
+library(mice)     # for imputation and amputation
+library(purrr)    # for functional programming
+library(furrr)    # for functional futures
+library(magrittr) # for pipes
+library(dplyr)    # for data manipulation
+library(tibble)   # for tibbles
+library(remstats) # for REM statistics
+library(remify)
+library(data.table)
+library(remstimate) # for   REM
+library(survival)
+library(relevent)
+```
+
+```{r}
 set.seed(123)
 ```
 
 
 ```{r}
 ##### Load data
+
 load("UUsummerschool.rdata")
 
 apollo <- as_tibble(PartOfApollo_13)
+
 ```
 
+##### renaming columns to work with remify
+```{r}
+setnames(apollo, old = c('sender','receiver'), 
+         new = c('actor1','actor2'))
+```
 
 ```{r}
+whichcol <- c("", "actor2", "actor1")
+names(whichcol) <- colnames(apollo)
+
+# use the custom pmm method
+method <- make.method(apollo)
+method[c(2,3)] <- "pmm.conditional"
+
+```
+
+##### Creating missing data
+```{r}
+
+##### Missing pattern
+pattern <- matrix(c(1,0,1,1,1,0), nrow=2, byrow=TRUE)
+
+##### predictor matrix
+predictormatrix <- matrix(c(0,0,0,0,0,1,0,1,0), nrow=3, byrow=TRUE)
+
+
+MCAR<- apollo %>% 
+      ampute(prop = .5, 
+             mech = "MCAR",
+             patterns = pattern)
+
+MCAR <- MCAR$amp %>%
+  mice(m = 5,
+       maxit = 5,
+       method = method,
+       whichcolumn = whichcol,
+       predictorMatrix = predictormatrix,
+       print = FALSE)
+
 ##### Model-based finite populations
 mbased_finite_apollo <- list(
-  MCAR = furrr::future_map(3, ~ { # map over 3 sims
+  MCAR = 
     apollo %>% 
       ampute(prop = .5, 
              mech = "MCAR",
-             patterns = c(1,0,0)) %>% .$amp %>%
+             patterns = pattern) %>% .$amp %>%
       mice(m = 5, 
            maxit = 5,
-           method = "pmm",
-           print = F)
-  }, .options = furrr_options(seed = 123)),
-  MAR = furrr::future_map(3, ~ { # map over 3 sims
+           method = method,
+           whichcolumn = whichcol,
+           predictorMatrix = predictormatrix,
+           print = FALSE) %>%
+    complete("all"),
+  MAR = 
     apollo %>% 
       ampute(prop = .5, 
              mech = "MAR", 
-             patterns = c(1,0,0),
+             patterns = pattern,
              type = "RIGHT") %>% .$amp %>% 
       mice(m = 5, 
            maxit = 5,
-           method = "pmm",
-           print = F)
-  }, .options = furrr_options(seed = 123))
-)
+           method = method,
+           whichcolumn = whichcol,
+           predictorMatrix = predictormatrix,
+           print = F) %>%
+    complete("all"))
 ```
-###### REM analysis on completed data sets of MCAR and MAR
+
+#### REM statistics
 ```{r}
-results <- mbased_finite_apollo %>% 
-  map(~.x %>% # for every missingness mechanism
-    map(~.x %>% # for every simulated multiple imputation....
-        complete("all") %>%
-        map(~.x %$%
-             rem.dyad(.x, n=19,effects = c("PSAB-BA", "NIDSnd", "NODRec"), ordinal = TRUE, hessian = TRUE) %>%
-              map(~map(., ~append(results, .)
-            )))))
+effects <- ~ -1 + outdegreeReceiver() + indegreeSender() + reciprocity()
+rehObject <- remify(apollo, model = "tie")
+
+statsObject <- remstats(rehObject, tie_effects = effects)
+
+dimnames(statsObject)
+
+attr(statsObject, 'riskset')
+
+reciprocity <- as.vector(statsObject[,,3])
+
+outdegreeReceiver <- as.vector(statsObject[,,2])
+
+indegreeSender <- as.vector(statsObject[,,1])
+
+head(indegreeSender)
 ```
+
+#### creating dataframe for coxph
+```{r}
+risk_sets <- attr(statsObject, "riskset")
+risk_sets <- risk_sets %>% select(-'id')
+
+time <- apollo$time
+
+## combine dataframes
+combined <- merge(risk_sets, time, by = NULL)
+combined <- combined %>% rename("time" = "y")
+
+## creating the status column
+combined <- combined %>%
+        mutate(status = ifelse(combined$sender == apollo$actor1 & combined$receiver == apollo$actor2 & combined$time == apollo$time, 1, 0))
