@@ -127,5 +127,4 @@ combined <- merge(risk_sets, time, by = NULL)
 combined <- combined %>% rename("time" = "y")
 
 ## creating the status column
-combined <- combined %>%
-        mutate(status = ifelse(combined$sender == apollo$actor1 & combined$receiver == apollo$actor2 & combined$time == apollo$time, 1, 0))
+combined$status <-  ifelse(combined$sender == apollo$actor1 & combined$receiver == apollo$actor2 & combined$time == apollo$time, 1, 0)
