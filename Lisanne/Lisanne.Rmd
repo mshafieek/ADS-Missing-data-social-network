@@ -43,6 +43,7 @@ devtools::install_github("TilburgNetworkGroup/remify")
 load("~/Master Applied Data Science/Thesis/Thesis/UUsummerschool.Rdata")
 str(PartOfApollo_13)
 summary(PartOfApollo_13)
+head(PartOfApollo_13)
 ```
 ## Visualize the network
 
@@ -154,16 +155,16 @@ fx <- fluxplot(MCAR_single$amp)
 ## Imputation missing values 
 
 ```{r}
-MCAR_single_imp <- mice(MCAR_single$amp, m = 5, 
+mids <- mice(MCAR_single$amp, m = 5, 
                         maxit = 5,
                         method = "pmm",
                         print = F)
 
 # removing time as a predictor
-pred <- MCAR_single_imp$pred
+pred <- mids$pred
 pred[ ,"time"] <- 0
 
-MCAR_single_imp <- mice(MCAR_single$amp, m=5, 
+imp <- mice(MCAR_single$amp, m=5, 
                         maxit=5,
                         pred=pred,  
                         method = "pmm", 
@@ -174,119 +175,219 @@ MCAR_single_imp <- mice(MCAR_single$amp, m=5,
 
 ```{r}
 # check if there are no loops
-MCAR_single_imp |>
+mids |>
   complete("long") |>
   summarize(all(sender != receiver))
 ```
 
 ### Inspect imputation
 ```{r}
-bwplot(MCAR_single_imp)
+bwplot(mids)
 ```
 
 
 ### Density plot imputation receiver column
 ```{r}
-densityplot(MCAR_single_imp, lwd = 3)
+densityplot(mids, lwd = 3)
 ```
 
 
 
 ### Scatterplot: Impact of imputation method on sender and receiver in MCAR_single_imp.
 ```{r}
-xyplot(MCAR_single_imp, receiver ~ sender | .imp)
+xyplot(mids, receiver ~ sender | .imp)
 ```
 
 # REM Part
 
 ## REM on the original dataset
 
-### Actor-based model 
+### StatsObject 
 
 ```{r}
-colnames(PartOfApollo_13) <- c("time", "actor1", "actor2")
+apollo.renamed <- PartOfApollo_13
+apollo.renamed <- apollo.renamed %>% 
+  rename(
+    actor1 = sender,
+    actor2 = receiver
+  )
 
-reh<- remify::remify(edgelist = PartOfApollo_13, directed = TRUE, ordinal = TRUE, model = "actor")
 
-sender_effects <- ~ indegreeSender()
+# Define effects
+effects <- ~ -1 + reciprocity() + indegreeSender() + outdegreeReceiver()
 
-receiver_effects <- ~ outdegreeReceiver() 
+# Prepare event history
+reh <- remify::remify(edgelist = apollo.renamed, model = "tie")
 
-out_actor <- remstats(sender_effects = sender_effects, receiver_effects = receiver_effects, reh = reh)
+# Compute statistics
+statsObject <- remstats(reh = reh, tie_effects = effects)
+dim(statsObject)
+head(attr(statsObject, "riskset"))
 
-print(out_actor)
+# Estimate model parameters
+fit <- remstimate::remstimate(reh = reh, stats = statsObject,
+                              method = "MLE")
+summary(fit)
 ```
 
-### Tie based model 
+### Function to create data for coxph 
 
 ```{r}
-reh<- remify::remify(edgelist = PartOfApollo_13, directed = TRUE, ordinal = TRUE, model = "tie")
+prepare_coxph_data_single <- function(statsObject, apollo) {
+  # Extract risk sets and remove 'id' column
+  risk_sets <- attr(statsObject, "riskset")
+  risk_sets <- risk_sets %>% select(-'id')
+  
+  # Get the times
+  time <- apollo$time
+  
+  # merge riskset with each timepoint
+  combined <- merge(risk_sets, time, by = NULL)
+  
+  combined <- combined %>% rename("time" = "y")
+  combined <- lapply(combined, as.numeric)
+  combined <- as.data.frame(combined)
+  
+  # Create matrices for subtraction to make a status column for coxph
+  combined_matrix <- data.matrix(combined)
+  matrix_rows <- nrow(combined)
+  
+  repeated_df <- apollo[rep(seq_len(nrow(apollo)), each = 240), ] 
+  repeated_df <- repeated_df[, c(2,3,1)]
+  
+  apollo_matrix <- data.matrix(repeated_df)
+  status_matrix <- apollo_matrix - combined_matrix
+  
+  # create a status column
+  status <- as.integer(rowSums(status_matrix == 0) == ncol(status_matrix))
+  status <- as.data.frame(status)
+  
+  # Add status to the combined set
+  combined <- cbind(combined, status)
+  
+  # Extract statistics and add them to the dataframe
+  reciprocity <- statsObject[,,1]
+  indegreeSender <- statsObject[,,2]
+  outdegreeReceiver <- statsObject[,,3]
+  
+  combined$reciprocity <- c(reciprocity)
+  combined$indegreeSender <- c(indegreeSender)
+  combined$outdegreeReceiver <- c(outdegreeReceiver)
+  
+  return(combined)
+}
 
-effects_tie <- ~psABBA()
+# Coxp data original dataset
+coxph_data_original <- prepare_coxph_data_single(statsObject, PartOfApollo_13)
 
-out_tie <- remstats(tie_effects = effects_tie, reh = reh)
-
-print(out_tie)
+coxph_data_original
 ```
 
-### Fit the model 
+### Coxph analysis
+
+```{r}
+cox_t <- coxph(Surv(time, status) ~ reciprocity + indegreeSender + outdegreeReceiver, data=coxph_data_original)
+
+cox_t
+
+```
+
 
 ## REM on the imputed datasets
 
-### Actor based model 
+### Function to create StasObject
 
 ```{r}
-# Loop over all imputed datasets within MCAR_single_imp
-for (i in 1:5) {
-  # Select the i-th imputed dataset
-  dataset <- complete(MCAR_single_imp, i)
+analysis_function <- function(data) {
+  # Rename columns
+  data <- data %>% 
+    rename(
+      actor1 = sender,  # replace 'sender' with the correct column name
+      actor2 = receiver  # replace 'receiver' with the correct column name
+    )
+
+  # Perform the analysis as before
+  reh <- remify::remify(edgelist = data, model = "tie")
+  statsObject_imp <- remstats(reh = reh, tie_effects = effects)
+
+  # Return the fit
+  return(statsObject_imp)
+}
+
+imputed_data <- mice::complete(imp, "all")
+
+statsObject_imp <- lapply(imputed_data, analysis_function)
+```
+
+
+### Function to create datasets for coxph
+
+```{r}
+# Define a function that prepares data for coxph
+prepare_coxph_data <- function(statsObject_imp, apollo) {
+  risk_sets <- attr(statsObject_imp, "riskset")
+  risk_sets <- risk_sets %>% select(-'id')
+
+  # Get the times
+  time <- apollo$time
+
+  # merge riskset with each timepoint
+  combined <- merge(risk_sets, time, by = NULL)
   
-  # Convert the dataset to a data frame
-  dataset <- as.data.frame(dataset)
+  combined <- combined %>% rename("time" = "y")
+  combined <- lapply(combined, as.numeric)
+  combined <- as.data.frame(combined)
+
+  # Create matrices for subtraction to make a status column for coxph
+  combined_matrix <- data.matrix(combined)
+  matrix_rows <- nrow(combined)
   
-  # Set column names
-  colnames(dataset) <- c("time", "actor1", "actor2")
+  repeated_df <- apollo[rep(seq_len(nrow(apollo)), each = 240), ] 
+  repeated_df <- repeated_df[, c(2,3,1)]
+  apollo_matrix <- data.matrix(repeated_df)
   
-  # Create the REM model
-  reh <- remify::remify(edgelist = dataset, directed = TRUE, ordinal = TRUE, model = "actor")
+  status_matrix <- apollo_matrix - combined_matrix
+
+  # create a status column
+  status <- as.integer(rowSums(status_matrix == 0) == ncol(status_matrix))
+  status <- as.data.frame(status)
   
-  # Define the actor based effects
-  sender_effects <- ~ indegreeSender()
-  receiver_effects <- ~ outdegreeReceiver()
+  # Add status to the combined set
+  combined <- cbind(combined, status)
   
-  # Calculate the effects using remstats
-  out_actor <- remstats(sender_effects = sender_effects, receiver_effects = receiver_effects, reh = reh)
+  # Extract statistics and add them to the dataframe
+  reciprocity <- statsObject_imp[,,1]
+  indegreeSender <- statsObject_imp[,,2]
+  outdegreeReceiver <- statsObject_imp[,,3]
   
-  # Print results
-  print(out_actor)
+  combined$reciprocity <- c(reciprocity)
+  combined$indegreeSender <- c(indegreeSender)
+  combined$outdegreeReceiver <- c(outdegreeReceiver)
+  
+  return(combined)
 }
 
 ```
 
-### Tie based model 
+### Coxph analysis
 
 ```{r}
-# Loop over all imputed datasets within MCAR_single_imp
-for (i in 1:5) {
-  # Select the i-th imputed dataset
-  dataset <- complete(MCAR_single_imp, i)
-  
-  # Convert the dataset to a data frame
-  dataset <- as.data.frame(dataset)
-  
-  # Set column names
-  colnames(dataset) <- c("time", "actor1", "actor2")
-  
-  # Create the REM model
-  reh <- remify::remify(edgelist = dataset, directed = TRUE, ordinal = TRUE, model = "tie")
-  
-  # Define the tie-based effects
-  tie_effects <- ~ psABBA()
-  
-  # Calculate the effects using remstats
-  out_tie <- remstats(tie_effects = tie_effects, reh = reh)
-  
-  # Print results
-  print(out_tie)
-}
+# Apply the function to each imputed dataset
+coxp_data_imputed <- lapply(statsObject_imp, prepare_coxph_data, apollo = PartOfApollo_13)
 
+coxp_data_imputed
+```
+
+
+### Coxph models 
+
+```{r}
+coxph_models <- lapply(coxp_data_imputed, function(df) {
+  coxph(Surv(time, status) ~ reciprocity + indegreeSender + outdegreeReceiver, data = df)
+})
+coxph_models
+```
+
+```{r}
+pool(coxph_models)
+```
