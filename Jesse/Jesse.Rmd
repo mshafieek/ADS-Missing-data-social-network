@@ -1,4 +1,10 @@
 ```{r}
+devtools::install_github("TilburgNetworkGroup/remify")
+devtools::install_github("TilburgNetworkGroup/remstats")
+devtools::install_github("gerkovink/mice@match_conditional")
+```
+
+```{r}
 library(mice)     # for imputation and amputation
 library(purrr)    # for functional programming
 library(furrr)    # for functional futures
@@ -128,3 +134,52 @@ combined <- combined %>% rename("time" = "y")
 
 ## creating the status column
 combined$status <-  ifelse(combined$sender == apollo$actor1 & combined$receiver == apollo$actor2 & combined$time == apollo$time, 1, 0)
+
+###### REM analysis on completed data sets of MCAR and MAR
+```{r}
+
+run_coxph <- function(df) {
+  rehObject <- remify(as.data.frame(df), model = "tie")
+  statsObject <- remstats(rehObject, tie_effects = effects)
+  
+  reciprocity <- as.vector(statsObject[,,3])
+  outdegreeReceiver <- as.vector(statsObject[,,1])
+  indegreeSender <- as.vector(statsObject[,,2])
+  
+  data <- cbind(combined, reciprocity, outdegreeReceiver, indegreeSender)
+  
+  coxph(Surv(time, status) ~ reciprocity + indegreeSender + outdegreeReceiver, data = data)
+}
+
+###### running the function on all completed datasets
+
+
+Results <- mbased_finite_apollo %>% 
+  map(~.x %>% # for every missingness mechanism
+        map(~.x %$%
+              with(.x, run_coxph(.x))
+            ) %>%
+        pool()
+  )
+
+
+Results %>%
+  map(~.x %>%
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = True$coefficients, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+    )
+```
