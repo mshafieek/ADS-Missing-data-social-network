@@ -57,7 +57,7 @@ pred
 method <- make.method(apollo.renamed)
 method[c(2,3)] <- "pmm.conditional"
 
-MCAR_finite <- furrr::future_map(1:50, ~ { # map over 1000 sims
+MCAR_finite <- furrr::future_map(1:100, ~ { # map over 1000 sims
   apollo.renamed %>% 
     ampute(prop = .2, 
            patterns = c(1,0,1),
