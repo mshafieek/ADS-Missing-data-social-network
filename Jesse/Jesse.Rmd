@@ -4,19 +4,19 @@ devtools::install_github("TilburgNetworkGroup/remstats")
 devtools::install_github("gerkovink/mice@match_conditional")
 ```
 
+
 ```{r}
-library(mice)     # for imputation and amputation
-library(purrr)    # for functional programming
-library(furrr)    # for functional futures
-library(magrittr) # for pipes
-library(dplyr)    # for data manipulation
-library(tibble)   # for tibbles
-library(remstats) # for REM statistics
-library(remify)
-library(data.table)
-library(remstimate) # for   REM
-library(survival)
-library(relevent)
+library(mice)       # for imputation and amputation
+library(purrr)      # for functional programming
+library(furrr)      # for functional futures
+library(magrittr)   # for pipes
+library(dplyr)      # for data manipulation
+library(tibble)     # for tibbles
+library(remstats)   # for REM statistics
+library(remify)     # for converting  
+library(data.table) 
+library(survival)   # for REM analysis
+library(tidyverse)
 ```
 
 ```{r}
