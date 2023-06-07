@@ -20,26 +20,14 @@ library(relevent)
 ```
 
 ```{r}
-set.seed(123)
-```
-
-
-```{r}
-##### Load data
-
-load("UUsummerschool.rdata")
-
+con <- url("https://github.com/mshafieek/ADS-Missing-data-social-network/raw/main/literature_%20REM/Tutorial_REM_REH_DATA/UUsummerschool.Rdata")
+load(con)
 apollo <- as_tibble(PartOfApollo_13)
 
-```
-
 ##### renaming columns to work with remify
-```{r}
 setnames(apollo, old = c('sender','receiver'), 
          new = c('actor1','actor2'))
-```
 
-```{r}
 whichcol <- c("", "actor2", "actor1")
 names(whichcol) <- colnames(apollo)
 
@@ -47,10 +35,29 @@ names(whichcol) <- colnames(apollo)
 method <- make.method(apollo)
 method[c(2,3)] <- "pmm.conditional"
 
-```
 
-##### Creating missing data
-```{r}
+#### set with sufficient actors & dyads
+set.seed(123) # fix seed to realize a sufficient set
+
+indic <- sample(1:nrow(apollo), 1500)
+remify(apollo[indic, ], model = "tie") %>% dim() 
+
+
+#### Combine the sufficient set and the incomplete set
+make_missing <- function(x, indic){
+  sufficient <- x[indic, ]
+  miss <- x[-c(indic), ] |>
+    ampute(prop = .2, 
+           mech = "MCAR",
+           patterns = matrix(c(1,0,1,
+                               1,1,0), 
+                             nrow=2, 
+                             byrow=TRUE)) %>% 
+    .$amp
+  combined <- rbind(sufficient, 
+                    miss)
+  return(combined[order(combined$time), ]) # sort it all like apollo
+}
 
 ##### Missing pattern
 pattern <- matrix(c(1,0,1,1,1,0), nrow=2, byrow=TRUE)
@@ -58,85 +65,54 @@ pattern <- matrix(c(1,0,1,1,1,0), nrow=2, byrow=TRUE)
 ##### predictor matrix
 predictormatrix <- matrix(c(0,0,0,0,0,1,0,1,0), nrow=3, byrow=TRUE)
 
-
-MCAR<- apollo %>% 
-      ampute(prop = .5, 
-             mech = "MCAR",
-             patterns = pattern)
-
-MCAR <- MCAR$amp %>%
-  mice(m = 5,
-       maxit = 5,
-       method = method,
-       whichcolumn = whichcol,
-       predictorMatrix = predictormatrix,
-       print = FALSE)
-
 ##### Model-based finite populations
-mbased_finite_apollo <- list(
-  MCAR = 
-    apollo %>% 
-      ampute(prop = .5, 
-             mech = "MCAR",
-             patterns = pattern) %>% .$amp %>%
+mbased_finite_apollo <- list( 
+  MCAR = furrr::future_map(1:1000, ~ {
+    make_missing(apollo, indic) %>%
       mice(m = 5, 
            maxit = 5,
            method = method,
            whichcolumn = whichcol,
            predictorMatrix = predictormatrix,
-           print = FALSE) %>%
-    complete("all"),
-  MAR = 
-    apollo %>% 
-      ampute(prop = .5, 
-             mech = "MAR", 
-             patterns = pattern,
-             type = "RIGHT") %>% .$amp %>% 
-      mice(m = 5, 
-           maxit = 5,
-           method = method,
-           whichcolumn = whichcol,
-           predictorMatrix = predictormatrix,
-           print = F) %>%
-    complete("all"))
-```
+           print = FALSE)
+  }, .options = furrr_options(seed = 123)))
 
-#### REM statistics
-```{r}
+
+#### 
 effects <- ~ -1 + outdegreeReceiver() + indegreeSender() + reciprocity()
 rehObject <- remify(apollo, model = "tie")
 
 statsObject <- remstats(rehObject, tie_effects = effects)
 
-dimnames(statsObject)
-
-attr(statsObject, 'riskset')
-
-reciprocity <- as.vector(statsObject[,,3])
-
-outdegreeReceiver <- as.vector(statsObject[,,2])
-
-indegreeSender <- as.vector(statsObject[,,1])
-
-head(indegreeSender)
-```
-
-#### creating dataframe for coxph
-```{r}
+### get the risk sets
 risk_sets <- attr(statsObject, "riskset")
 risk_sets <- risk_sets %>% select(-'id')
 
+### Get the times
 time <- apollo$time
 
-## combine dataframes
+### merge riskset with each timepoint
 combined <- merge(risk_sets, time, by = NULL)
 combined <- combined %>% rename("time" = "y")
+combined <- lapply(combined, as.numeric)
+combined <- as.data.frame(combined)
 
-## creating the status column
-combined$status <-  ifelse(combined$sender == apollo$actor1 & combined$receiver == apollo$actor2 & combined$time == apollo$time, 1, 0)
+### Create matrices for subtraction to make a status column for coxph
+combined_matrix <- data.matrix(combined)
+matrix_rows <- nrow(combined)
+repeated_df <- apollo[rep(seq_len(nrow(apollo)), each = 240), ] %>% rename("sender" = "actor1", "receiver" = "actor2")
+repeated_df <- repeated_df[, c(2,3,1)]
+apollo_matrix <- data.matrix(repeated_df)
+status_matrix <- apollo_matrix - combined_matrix
+
+### create a status column
+status <- as.integer(rowSums(status_matrix == 0) == ncol(status_matrix))
+status <- as.data.frame(status)
+
+### Add status to the combined set
+combined <- cbind(combined, status) 
 
 ###### REM analysis on completed data sets of MCAR and MAR
-```{r}
 
 run_coxph <- function(df) {
   rehObject <- remify(as.data.frame(df), model = "tie")
@@ -148,25 +124,26 @@ run_coxph <- function(df) {
   
   data <- cbind(combined, reciprocity, outdegreeReceiver, indegreeSender)
   
-  coxph(Surv(time, status) ~ reciprocity + indegreeSender + outdegreeReceiver, data = data)
+  fit <- coxph(Surv(time, status) ~ reciprocity + indegreeSender + outdegreeReceiver, data = data)
+  return(fit)
 }
 
 ###### running the function on all completed datasets
-
-
 Results <- mbased_finite_apollo %>% 
   map(~.x %>% # for every missingness mechanism
-        map(~.x %$%
-              with(.x, run_coxph(.x))
-            ) %>%
-        pool()
-  )
-
+        map(~.x %>% # for every simulated multiple imputation....
+              complete("all") %>% # create a list of completed data sets
+              map(~.x %$% # for every completed data set....
+                   with(.x, run_coxph(.x)
+              )
+        ) %>% pool(custom.t = ".data$b + .data$b / .data$m")
+  ))
 
 Results %>%
   map(~.x %>%
-        .$pooled %>% # extract table of pooled coefficients
-          mutate(true = True$coefficients, # add true
+        map(~.x %>%
+          .$pooled %>% # extract table of pooled coefficients
+          mutate(true = True$coefficient, # add true
                  df = m-1,  # correct df
                  riv = Inf, # correct riv
                  std.error = sqrt(t), # standard error
@@ -181,5 +158,8 @@ Results %>%
           select(term, m, true, estimate, std.error, statistic, p.value, 
                  riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
           column_to_rownames("term") # `term` as rownames
-    )
+    ) %>% 
+      Reduce("+", .) / length(mbased_finite_apollo)
+  )
+
 ```
