@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.475">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Untitled</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="Simulation_Vira_files/libs/clipboard/clipboard.min.js"></script>
+<script src="Simulation_Vira_files/libs/quarto-html/quarto.js"></script>
+<script src="Simulation_Vira_files/libs/quarto-html/popper.min.js"></script>
+<script src="Simulation_Vira_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="Simulation_Vira_files/libs/quarto-html/anchor.min.js"></script>
+<link href="Simulation_Vira_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="Simulation_Vira_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="Simulation_Vira_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="Simulation_Vira_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="Simulation_Vira_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Untitled</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<section id="preparation" class="level1">
+<h1>Preparation</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(mice, <span class="at">warn.conflicts =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">require</span>(lattice)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: lattice</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.2     ✔ readr     2.1.4
+✔ forcats   1.0.0     ✔ stringr   1.5.0
+✔ ggplot2   3.4.2     ✔ tibble    3.2.1
+✔ lubridate 1.9.2     ✔ tidyr     1.3.0
+✔ purrr     1.0.1     </code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks mice::filter(), stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(magrittr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'magrittr'
+
+The following object is masked from 'package:purrr':
+
+    set_names
+
+The following object is masked from 'package:tidyr':
+
+    extract</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr) </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(furrr)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: future</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(relevent)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: trust
+Loading required package: sna
+Loading required package: statnet.common
+
+Attaching package: 'statnet.common'
+
+The following objects are masked from 'package:base':
+
+    attr, order
+
+Loading required package: network
+
+'network' 1.18.1 (2023-01-24), part of the Statnet Project
+* 'news(package="network")' for changes since last version
+* 'citation("network")' for citation information
+* 'https://statnet.org' for help, support, and other information
+
+sna: Tools for Social Network Analysis
+Version 2.7-1 created on 2023-01-24.
+copyright (c) 2005, Carter T. Butts, University of California-Irvine
+ For citation information, type citation("sna").
+ Type help(package="sna") to get started.
+
+Loading required package: coda
+relevent: Relational Event Models
+Version 1.2-1 created on 2023-01-24.
+copyright (c) 2007, Carter T. Butts, University of California-
+Irvine
+ For citation information, type citation("relevent").
+ Type help(package="relevent") to get started.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom.mixed)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(rem)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(survival)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'survival'
+
+The following object is masked from 'package:future':
+
+    cluster</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(remify)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(remstats)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(devtools)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: usethis</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co">#library(remstimate)</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="co"># set working directory to be the current directory</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># GV 4/6/23: Not necessary, because I created a Project</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="co">#cur_dir = dirname(rstudioapi::getActiveDocumentContext()$path)</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="co">#setwd(cur_dir)</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="do">## 1. Read the data</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">"UUsummerschool.Rdata"</span>)</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(Twitter_data_rem3, WTCPoliceCalls, ClassIntercept, ClassIsFemale,</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>   ClassIsTeacher, WTCPoliceIsICR, Class)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="simulation" class="level1">
+<h1>Simulation</h1>
+<div class="cell" data-hash="Simulation_Vira_cache/html/simulation_a7c3b6becdb93effda15531d99cc76b4">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="do">## 2. Ampute and then impute the data</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># renaming dataset for later convenience </span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>apollo.renamed <span class="ot">&lt;-</span> PartOfApollo_13</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>apollo.renamed <span class="ot">&lt;-</span> apollo.renamed <span class="sc">%&gt;%</span> </span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">actor1 =</span> sender,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">actor2 =</span> receiver</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a><span class="co"># making the dataset a tibble </span></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>apollo.renamed <span class="ot">&lt;-</span> <span class="fu">as_tibble</span>(apollo.renamed)</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a><span class="co"># determine which column to condition on</span></span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>whichcol <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">""</span>, <span class="st">"actor2"</span>, <span class="st">"actor1"</span>)</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(whichcol) <span class="ot">&lt;-</span> <span class="fu">colnames</span>(apollo.renamed)</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a><span class="co"># create predictor matrix for imoutations</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>pred <span class="ot">&lt;-</span> <span class="fu">make.predictorMatrix</span>(apollo.renamed)</span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>pred[ ,<span class="st">"time"</span>] <span class="ot">&lt;-</span> <span class="dv">0</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>pred</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>       time actor1 actor2
+time      0      1      1
+actor1    0      0      1
+actor2    0      1      0</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># use the custom pmm method</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>method <span class="ot">&lt;-</span> <span class="fu">make.method</span>(apollo.renamed)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>method[<span class="fu">c</span>(<span class="dv">2</span>,<span class="dv">3</span>)] <span class="ot">&lt;-</span> <span class="st">"pmm.conditional"</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>MCAR_finite <span class="ot">&lt;-</span> furrr<span class="sc">::</span><span class="fu">future_map</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">100</span>, <span class="sc">~</span> { <span class="co"># map over 100 sims</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  apollo.renamed <span class="sc">%&gt;%</span> </span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ampute</span>(<span class="at">prop =</span> .<span class="dv">2</span>, </span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">patterns =</span> <span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>),</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">mech =</span> <span class="st">"MCAR"</span>) <span class="sc">%&gt;%</span> .<span class="sc">$</span>amp <span class="sc">%&gt;%</span> </span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mice</span>(<span class="at">m =</span> <span class="dv">5</span>, </span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">maxit =</span> <span class="dv">5</span>,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">method =</span> method,</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>         <span class="at">pred=</span>pred,</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>         <span class="at">whichcolumn =</span> whichcol,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>         <span class="at">print =</span> F)</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>}, <span class="at">.options =</span> <span class="fu">furrr_options</span>(<span class="at">seed =</span> <span class="dv">123</span>))</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a><span class="co">#GV: NOT RUN</span></span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a><span class="co"># check if it is correct </span></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="co"># MCAR_finite |&gt; map(~.x %&gt;%</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="co">#   complete("long") |&gt;</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a><span class="co">#   summarize(all(actor1 != actor2)))</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="effects-and-function-definition" class="level1">
+<h1>Effects and function definition</h1>
+<div class="cell" data-hash="Simulation_Vira_cache/html/functions_32a711a6a0532261b058dabafc472d3d">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># creating functions </span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Define effects</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>effects <span class="ot">&lt;-</span> <span class="er">~</span> <span class="sc">-</span><span class="dv">1</span> <span class="sc">+</span> <span class="fu">reciprocity</span>(<span class="at">scaling =</span> (<span class="st">"std"</span>)) <span class="sc">+</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">indegreeSender</span>() <span class="sc">+</span> <span class="fu">outdegreeReceiver</span>()</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co"># function to remify each imputed dataset</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">#GV more efficient, because no storage</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>rem_function <span class="ot">&lt;-</span> <span class="cf">function</span>(data) {</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Perform the analysis as before</span></span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  remify<span class="sc">::</span><span class="fu">remify</span>(<span class="at">edgelist =</span> data, <span class="at">model =</span> <span class="st">"tie"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">remstats</span>(<span class="at">tie_effects =</span> effects)</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a><span class="co"># function to create a dataset for the cox model </span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>cox_sets_function <span class="ot">&lt;-</span> <span class="cf">function</span>(statsObject_imp, apollo_data) {</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>  <span class="co"># take the single riskset </span></span>
+<span id="cb20-19"><a href="#cb20-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># remove the id column</span></span>
+<span id="cb20-20"><a href="#cb20-20" aria-hidden="true" tabindex="-1"></a>  risk_sets <span class="ot">&lt;-</span> <span class="fu">attr</span>(statsObject_imp, <span class="st">"riskset"</span>) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="st">'id'</span>)</span>
+<span id="cb20-21"><a href="#cb20-21" aria-hidden="true" tabindex="-1"></a>  <span class="co"># creating one set with all risksets for each time point </span></span>
+<span id="cb20-22"><a href="#cb20-22" aria-hidden="true" tabindex="-1"></a>  combined <span class="ot">&lt;-</span> <span class="fu">merge</span>(risk_sets, apollo_data<span class="sc">$</span>time, <span class="at">by=</span><span class="cn">NULL</span>)  <span class="sc">%&gt;%</span> </span>
+<span id="cb20-23"><a href="#cb20-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">time =</span> y) <span class="sc">%&gt;%</span> </span>
+<span id="cb20-24"><a href="#cb20-24" aria-hidden="true" tabindex="-1"></a>    .[, <span class="fu">c</span>(<span class="st">"time"</span>, <span class="st">"sender"</span>, <span class="st">"receiver"</span>)] <span class="sc">%&gt;%</span> </span>
+<span id="cb20-25"><a href="#cb20-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">sender =</span> <span class="fu">as.numeric</span>(sender), </span>
+<span id="cb20-26"><a href="#cb20-26" aria-hidden="true" tabindex="-1"></a>           <span class="at">receiver =</span> <span class="fu">as.numeric</span>(receiver))</span>
+<span id="cb20-27"><a href="#cb20-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-28"><a href="#cb20-28" aria-hidden="true" tabindex="-1"></a>  <span class="co"># GV: Calculate divergence</span></span>
+<span id="cb20-29"><a href="#cb20-29" aria-hidden="true" tabindex="-1"></a>  diff <span class="ot">&lt;-</span> apollo_data[<span class="fu">rep</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(apollo_data)), <span class="at">each =</span> <span class="dv">240</span>), ] <span class="sc">%&gt;%</span> </span>
+<span id="cb20-30"><a href="#cb20-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">data.matrix</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb20-31"><a href="#cb20-31" aria-hidden="true" tabindex="-1"></a>    .[, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>] <span class="sc">-</span> combined</span>
+<span id="cb20-32"><a href="#cb20-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># GV: identify non-divergence</span></span>
+<span id="cb20-33"><a href="#cb20-33" aria-hidden="true" tabindex="-1"></a>  combined<span class="sc">$</span>status <span class="ot">&lt;-</span> </span>
+<span id="cb20-34"><a href="#cb20-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rowSums</span>(diff <span class="sc">==</span> <span class="dv">0</span>) <span class="sc">==</span> <span class="fu">ncol</span>(diff)</span>
+<span id="cb20-35"><a href="#cb20-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-36"><a href="#cb20-36" aria-hidden="true" tabindex="-1"></a>  <span class="co">#combining the dataset with riskset to the statistic</span></span>
+<span id="cb20-37"><a href="#cb20-37" aria-hidden="true" tabindex="-1"></a>  reciprocity <span class="ot">&lt;-</span> statsObject_imp[,,<span class="dv">1</span>]</span>
+<span id="cb20-38"><a href="#cb20-38" aria-hidden="true" tabindex="-1"></a>  indegreeSender <span class="ot">&lt;-</span> statsObject_imp[,,<span class="dv">2</span>]</span>
+<span id="cb20-39"><a href="#cb20-39" aria-hidden="true" tabindex="-1"></a>  outdegreeReceiver <span class="ot">&lt;-</span> statsObject_imp[,,<span class="dv">3</span>]</span>
+<span id="cb20-40"><a href="#cb20-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-41"><a href="#cb20-41" aria-hidden="true" tabindex="-1"></a>  recip.vector <span class="ot">&lt;-</span> <span class="fu">c</span>(reciprocity)</span>
+<span id="cb20-42"><a href="#cb20-42" aria-hidden="true" tabindex="-1"></a>  combined<span class="sc">$</span>reciprocity <span class="ot">&lt;-</span> recip.vector</span>
+<span id="cb20-43"><a href="#cb20-43" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-44"><a href="#cb20-44" aria-hidden="true" tabindex="-1"></a>  indegSen.vector <span class="ot">&lt;-</span> <span class="fu">c</span>(indegreeSender)</span>
+<span id="cb20-45"><a href="#cb20-45" aria-hidden="true" tabindex="-1"></a>  combined<span class="sc">$</span>indegreeSender <span class="ot">&lt;-</span> indegSen.vector</span>
+<span id="cb20-46"><a href="#cb20-46" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-47"><a href="#cb20-47" aria-hidden="true" tabindex="-1"></a>  outRec.vector <span class="ot">&lt;-</span> <span class="fu">c</span>(outdegreeReceiver)</span>
+<span id="cb20-48"><a href="#cb20-48" aria-hidden="true" tabindex="-1"></a>  combined<span class="sc">$</span>outdegreeReceiver <span class="ot">&lt;-</span> outRec.vector</span>
+<span id="cb20-49"><a href="#cb20-49" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-50"><a href="#cb20-50" aria-hidden="true" tabindex="-1"></a>  combined<span class="sc">$</span>status <span class="ot">&lt;-</span> <span class="fu">as.integer</span>(<span class="fu">as.logical</span>(combined<span class="sc">$</span>status))</span>
+<span id="cb20-51"><a href="#cb20-51" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb20-52"><a href="#cb20-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(combined)</span>
+<span id="cb20-53"><a href="#cb20-53" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels1_6e874ef61e44e435c4c611ee00d3c5e6">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># prepare the data for the cox model</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>t1 <span class="ot">&lt;-</span> <span class="fu">Sys.time</span>()</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>cox.models.sims <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a><span class="fu">Sys.time</span>() <span class="sc">-</span> t1</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Time difference of 2.08516 mins</code></pre>
+</div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels2_e3dc56195b3820a6499968ee072b4918">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims2 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">11</span><span class="sc">:</span><span class="dv">20</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels3_f51730d145cc5d28e002f5364159e448">
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims3 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">21</span><span class="sc">:</span><span class="dv">30</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels4_cd76f01474a69cb1cd5774367cb27c3a">
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims4 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">31</span><span class="sc">:</span><span class="dv">40</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels5_9e79d5cdd06b32781e7e9ed2a9f0553d">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims5 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">41</span><span class="sc">:</span><span class="dv">50</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels6_feab2718416de6b9855a3695d8142e79">
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims6 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">51</span><span class="sc">:</span><span class="dv">60</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels7_41610f3d56039214c5aca87188ab7328">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims7 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">61</span><span class="sc">:</span><span class="dv">70</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb28-9"><a href="#cb28-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb28-10"><a href="#cb28-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels8_4a65478087e229e522f1318bff9bdb88">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims8 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">71</span><span class="sc">:</span><span class="dv">80</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels9_bd789000c30549697e46ade5a329bafc">
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims9 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">81</span><span class="sc">:</span><span class="dv">90</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/coxmodels10_128ad8279dc923e8e538a6531f27b78b">
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>cox.models.sims10 <span class="ot">&lt;-</span> MCAR_finite[<span class="dv">91</span><span class="sc">:</span><span class="dv">100</span>] <span class="sc">%&gt;%</span> </span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># for every simulated multiple imputation....</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>              <span class="fu">complete</span>(<span class="st">"all"</span>) <span class="sc">%&gt;%</span> <span class="co"># create a list of completed data sets</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>              <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span> <span class="co"># GV: changed into regular pipe - for every completed data set....</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">rem_function</span>() <span class="sc">%&gt;%</span> <span class="co"># GV: removed .x - remify the imputed set</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">cox_sets_function</span>(<span class="at">apollo_data=</span>PartOfApollo_13) <span class="sc">%$%</span> </span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> </span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>                            reciprocity <span class="sc">+</span> </span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>                            indegreeSender <span class="sc">+</span> </span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>                            outdegreeReceiver))) <span class="co"># create the sets for cox model</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co">#stitch the lists together</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>sims <span class="ot">&lt;-</span> <span class="fu">list</span>(cox.models.sims,</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>             cox.models.sims2,</span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>             cox.models.sims3,</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>             cox.models.sims4,</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>             cox.models.sims5,</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>             cox.models.sims6,</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>             cox.models.sims7,</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>             cox.models.sims8,</span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>             cox.models.sims9,</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>             cox.models.sims10) <span class="sc">%&gt;%</span> </span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  purrr<span class="sc">::</span><span class="fu">flatten</span>() <span class="co"># make a single flat list instead of a list of lists</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell" data-hash="Simulation_Vira_cache/html/pool_bd70aba7a7e799de056105f1fa91b595">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="co"># pool cox models </span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>pooled.results <span class="ot">&lt;-</span> sims <span class="sc">%&gt;%</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">pool</span>())</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a><span class="do">######################### cox model on complete data ######################### </span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Prepare event history</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>true.reh <span class="ot">&lt;-</span> <span class="fu">remify</span>(<span class="at">edgelist =</span> apollo.renamed, </span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>                   <span class="at">model =</span> <span class="st">"tie"</span>)</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate stats</span></span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a>stats <span class="ot">&lt;-</span> <span class="fu">remstats</span>(<span class="at">tie_effects =</span> effects, </span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>                                  <span class="at">reh =</span> true.reh)</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a><span class="co"># use the function to create the correct format of the dataframe</span></span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a>true.cox.set <span class="ot">&lt;-</span> <span class="fu">cox_sets_function</span>(stats, PartOfApollo_13)</span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a><span class="co"># fit cox model </span></span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>true.cox.fit <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> reciprocity <span class="sc">+</span> indegreeSender <span class="sc">+</span> </span>
+<span id="cb33-17"><a href="#cb33-17" aria-hidden="true" tabindex="-1"></a>                        outdegreeReceiver, </span>
+<span id="cb33-18"><a href="#cb33-18" aria-hidden="true" tabindex="-1"></a>                      <span class="at">data=</span>true.cox.set)</span>
+<span id="cb33-19"><a href="#cb33-19" aria-hidden="true" tabindex="-1"></a>true <span class="ot">&lt;-</span> <span class="fu">coefficients</span>(true.cox.fit)</span>
+<span id="cb33-20"><a href="#cb33-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-21"><a href="#cb33-21" aria-hidden="true" tabindex="-1"></a><span class="co"># average the pools </span></span>
+<span id="cb33-22"><a href="#cb33-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-23"><a href="#cb33-23" aria-hidden="true" tabindex="-1"></a>pooled.average <span class="ot">&lt;-</span> sims <span class="sc">%&gt;%</span></span>
+<span id="cb33-24"><a href="#cb33-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map</span>(<span class="sc">~</span>.x <span class="sc">%&gt;%</span></span>
+<span id="cb33-25"><a href="#cb33-25" aria-hidden="true" tabindex="-1"></a>        <span class="fu">pool</span>(<span class="at">custom.t =</span> <span class="st">".data$b + .data$b / .data$m"</span>) <span class="sc">%&gt;%</span> <span class="co"># pool coefficients</span></span>
+<span id="cb33-26"><a href="#cb33-26" aria-hidden="true" tabindex="-1"></a>  .<span class="sc">$</span>pooled <span class="sc">%&gt;%</span> <span class="co"># extract table of pooled coefficients</span></span>
+<span id="cb33-27"><a href="#cb33-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">true =</span> true, <span class="co"># add true</span></span>
+<span id="cb33-28"><a href="#cb33-28" aria-hidden="true" tabindex="-1"></a>         <span class="at">df =</span> m<span class="dv">-1</span>,  <span class="co"># correct df</span></span>
+<span id="cb33-29"><a href="#cb33-29" aria-hidden="true" tabindex="-1"></a>         <span class="at">riv =</span> <span class="cn">Inf</span>, <span class="co"># correct riv</span></span>
+<span id="cb33-30"><a href="#cb33-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">std.error =</span> <span class="fu">sqrt</span>(t), <span class="co"># standard error</span></span>
+<span id="cb33-31"><a href="#cb33-31" aria-hidden="true" tabindex="-1"></a>         <span class="at">statistic =</span> estimate <span class="sc">/</span> std.error, <span class="co"># test statistic</span></span>
+<span id="cb33-32"><a href="#cb33-32" aria-hidden="true" tabindex="-1"></a>         <span class="at">p.value =</span> <span class="dv">2</span> <span class="sc">*</span> (<span class="fu">pt</span>(<span class="fu">abs</span>(statistic), </span>
+<span id="cb33-33"><a href="#cb33-33" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">pmax</span>(df, <span class="fl">0.001</span>), </span>
+<span id="cb33-34"><a href="#cb33-34" aria-hidden="true" tabindex="-1"></a>                           <span class="at">lower.tail =</span> <span class="cn">FALSE</span>)), <span class="co"># correct p.value</span></span>
+<span id="cb33-35"><a href="#cb33-35" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">2.5 %</span><span class="st">`</span> <span class="ot">=</span> estimate <span class="sc">-</span> <span class="fu">qt</span>(.<span class="dv">975</span>, df) <span class="sc">*</span> std.error, <span class="co"># lower bound CI</span></span>
+<span id="cb33-36"><a href="#cb33-36" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">97.5 %</span><span class="st">`</span> <span class="ot">=</span> estimate <span class="sc">+</span> <span class="fu">qt</span>(.<span class="dv">975</span>, df) <span class="sc">*</span> std.error, <span class="co"># upper bound CI</span></span>
+<span id="cb33-37"><a href="#cb33-37" aria-hidden="true" tabindex="-1"></a>         <span class="at">cov =</span> <span class="st">`</span><span class="at">2.5 %</span><span class="st">`</span> <span class="sc">&lt;</span> true <span class="sc">&amp;</span> true <span class="sc">&lt;</span> <span class="st">`</span><span class="at">97.5 %</span><span class="st">`</span>, <span class="co"># coverage</span></span>
+<span id="cb33-38"><a href="#cb33-38" aria-hidden="true" tabindex="-1"></a>         <span class="at">bias =</span> estimate <span class="sc">-</span> true) <span class="sc">%&gt;%</span> <span class="co"># bias</span></span>
+<span id="cb33-39"><a href="#cb33-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term, m, true, estimate, std.error, statistic, p.value, </span>
+<span id="cb33-40"><a href="#cb33-40" aria-hidden="true" tabindex="-1"></a>         riv, <span class="st">`</span><span class="at">2.5 %</span><span class="st">`</span>, <span class="st">`</span><span class="at">97.5 %</span><span class="st">`</span>, cov, bias) <span class="sc">%&gt;%</span> </span>
+<span id="cb33-41"><a href="#cb33-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">"term"</span>) <span class="co"># `term` as rownames</span></span>
+<span id="cb33-42"><a href="#cb33-42" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> </span>
+<span id="cb33-43"><a href="#cb33-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Reduce</span>(<span class="st">"+"</span>, .) <span class="sc">/</span> <span class="fu">length</span>(MCAR_finite)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co">#save relevant items for archiving</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>pooled.results</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[[1]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.504019e-02 3.504692e-04 5.453463e-07 3.511236e-04
+2    indegreeSender 5  4.291866e-04 5.509004e-09 1.674295e-12 5.511013e-09
+3 outdegreeReceiver 5 -9.556888e-05 5.625427e-09 6.593481e-11 5.704548e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3856.815 0.0018672558 0.0018637757 0.0023809696
+2  3879 3875.089 0.0003647036 0.0003645706 0.0008801005
+3  3879 3229.422 0.0140650258 0.0138699446 0.0144800940
+
+[[2]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0236332253 3.506532e-04 3.584145e-07 3.510833e-04
+2    indegreeSender 5  0.0004312429 5.487816e-09 1.066288e-12 5.489095e-09
+3 outdegreeReceiver 5 -0.0000926025 5.509599e-09 1.444496e-11 5.526933e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3866.634 0.0012265604 0.0012250578 0.0017412694
+2  3879 3875.894 0.0002331612 0.0002331069 0.0007485976
+3  3879 3828.457 0.0031461373 0.0031362702 0.0036566277
+
+[[3]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.410270e-02 3.429675e-04 1.934014e-07 3.431996e-04
+2    indegreeSender 5  4.310434e-04 5.465886e-09 5.685742e-13 5.466568e-09
+3 outdegreeReceiver 5 -9.140091e-05 5.478911e-09 4.547984e-12 5.484368e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3872.665 0.0006766870 0.0006762294 0.0011919210
+2  3879 3876.459 0.0001248268 0.0001248112 0.0006402826
+3  3879 3869.433 0.0009961070 0.0009951158 0.0015110730
+
+[[4]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.354022e-02 3.426069e-04 1.172857e-07 3.427476e-04
+2    indegreeSender 5  4.315182e-04 5.470790e-09 4.208221e-13 5.471295e-09
+3 outdegreeReceiver 5 -9.132258e-05 5.516825e-09 7.001007e-12 5.525226e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3874.777 4.107999e-04 4.106312e-04 0.0009261789
+2  3879 3876.576 9.230595e-05 9.229743e-05 0.0006077701
+3  3879 3862.464 1.522834e-03 1.520519e-03 0.0020371341
+
+[[5]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.433147e-02 3.448290e-04 6.097495e-07 3.455607e-04
+2    indegreeSender 5  4.306755e-04 5.468691e-09 1.431963e-12 5.470409e-09
+3 outdegreeReceiver 5 -9.121775e-05 5.440922e-09 1.962428e-11 5.464471e-09
+  dfcom       df         riv       lambda          fmi
+1  3879 3852.088 0.002121920 0.0021174269 0.0026351233
+2  3879 3875.413 0.000314217 0.0003141183 0.0008296312
+3  3879 3792.323 0.004328153 0.0043095004 0.0048341938
+
+[[6]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.461781e-02 3.419101e-04 5.200325e-07 3.425341e-04
+2    indegreeSender 5  4.299354e-04 5.487873e-09 1.650985e-12 5.489855e-09
+3 outdegreeReceiver 5 -9.452026e-05 5.624914e-09 8.248818e-12 5.634813e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3857.551 0.0018251555 0.0018218304 0.0023389473
+2  3879 3875.113 0.0003610109 0.0003608806 0.0008764091
+3  3879 3858.670 0.0017597747 0.0017566833 0.0022736842
+
+[[7]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.463443e-02 3.469357e-04 2.108108e-07 3.471886e-04
+2    indegreeSender 5  4.300259e-04 5.486884e-09 6.881972e-13 5.487710e-09
+3 outdegreeReceiver 5 -9.278511e-05 5.553871e-09 1.048636e-11 5.566455e-09
+  dfcom       df         riv       lambda          fmi
+1  3879 3872.186 0.000729164 0.0007286327 0.0012443610
+2  3879 3876.333 0.000150511 0.0001504884 0.0006659634
+3  3879 3849.214 0.002265741 0.0022606193 0.0027786276
+
+[[8]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[9]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.566778e-02 3.461882e-04 2.884218e-06 3.496493e-04
+2    indegreeSender 5  4.286478e-04 5.496467e-09 5.582139e-12 5.503166e-09
+3 outdegreeReceiver 5 -9.612669e-05 5.584414e-09 2.715630e-11 5.617002e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3508.700 0.009997628 0.009898665 0.010462552
+2  3879 3866.736 0.001218704 0.001217221 0.001733423
+3  3879 3733.418 0.005835448 0.005801593 0.006333760
+
+[[10]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.406888e-02 3.476858e-04 9.448415e-07 3.488197e-04
+2    indegreeSender 5  4.308011e-04 5.482193e-09 2.129533e-12 5.484748e-09
+3 outdegreeReceiver 5 -9.275055e-05 5.526649e-09 3.219932e-11 5.565288e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3825.354 0.0032610179 0.0032504182 0.0037711379
+2  3879 3874.380 0.0004661347 0.0004659175 0.0009814893
+3  3879 3679.372 0.0069914319 0.0069428911 0.0074822485
+
+[[11]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.495293e-02 3.416580e-04 1.551111e-06 3.435193e-04
+2    indegreeSender 5  4.296786e-04 5.480903e-09 2.747192e-12 5.484200e-09
+3 outdegreeReceiver 5 -9.266601e-05 5.574562e-09 2.166575e-11 5.600561e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3749.864 0.0054479419 0.0054184226 0.005948461
+2  3879 3873.315 0.0006014757 0.0006011142 0.001116758
+3  3879 3780.408 0.0046638464 0.0046421959 0.005168366
+
+[[12]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.404005e-02 3.433268e-04 1.240527e-07 3.434756e-04
+2    indegreeSender 5  4.309559e-04 5.477421e-09 5.674970e-13 5.478102e-09
+3 outdegreeReceiver 5 -9.325841e-05 5.581923e-09 6.070352e-12 5.589208e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3874.616 0.0004335907 0.0004334028 0.0009489601
+2  3879 3876.462 0.0001243279 0.0001243125 0.0006397838
+3  3879 3865.593 0.0013050023 0.0013033014 0.0018196115
+
+[[13]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[14]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[15]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.306903e-02 3.434877e-04 1.809181e-07 3.437048e-04
+2    indegreeSender 5  4.321363e-04 5.468266e-09 5.219206e-13 5.468892e-09
+3 outdegreeReceiver 5 -8.916122e-05 5.551180e-09 2.133205e-11 5.576778e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3873.056 0.0006320511 0.0006316518 0.0011473144
+2  3879 3876.508 0.0001145344 0.0001145213 0.0006299915
+3  3879 3782.318 0.0046113551 0.0045901881 0.0051161201
+
+[[16]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.315701e-02 3.455331e-04 2.216089e-07 3.457991e-04
+2    indegreeSender 5  4.318928e-04 5.467277e-09 6.423125e-13 5.468048e-09
+3 outdegreeReceiver 5 -8.696399e-05 5.420098e-09 1.160517e-12 5.421491e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3871.802 0.0007696243 0.0007690324 0.0012847908
+2  3879 3876.380 0.0001409797 0.0001409598 0.0006564334
+3  3879 3875.758 0.0002569364 0.0002568704 0.0007723669
+
+[[17]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[18]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.401722e-02 3.458311e-04 2.516562e-07 3.461331e-04
+2    indegreeSender 5  4.309125e-04 5.477924e-09 6.449028e-13 5.478698e-09
+3 outdegreeReceiver 5 -9.255965e-05 5.491344e-09 3.589207e-11 5.534415e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3870.766 0.0008732225 0.0008724606 0.0013883037
+2  3879 3876.379 0.0001412731 0.0001412532 0.0006567268
+3  3879 3635.103 0.0078433402 0.0077823010 0.0083277598
+
+[[19]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[20]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.446042e-02 3.424247e-04 5.967158e-07 3.431408e-04
+2    indegreeSender 5  4.302272e-04 5.483533e-09 1.266034e-12 5.485052e-09
+3 outdegreeReceiver 5 -9.408375e-05 5.603404e-09 3.968556e-11 5.651027e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3852.684 0.0020911427 0.0020867790 0.0026044113
+2  3879 3875.640 0.0002770551 0.0002769784 0.0007924803
+3  3879 3598.700 0.0084988815 0.0084272592 0.0089778729
+
+[[21]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.382671e-02 3.508559e-04 8.662510e-08 3.509599e-04
+2    indegreeSender 5  4.309621e-04 5.494210e-09 2.815841e-13 5.494548e-09
+3 outdegreeReceiver 5 -9.446653e-05 5.540509e-09 2.320913e-11 5.568360e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3875.524 2.962758e-04 2.961880e-04 0.0008116954
+2  3879 3876.576 6.150127e-05 6.149749e-05 0.0005769860
+3  3879 3766.734 5.026786e-03 5.001643e-03 0.0055295312
+
+[[22]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.346353e-02 3.535188e-04 6.046263e-07 3.542444e-04
+2    indegreeSender 5  4.314138e-04 5.498287e-09 1.394311e-12 5.499960e-09
+3 outdegreeReceiver 5 -9.790665e-05 5.464893e-09 8.050992e-11 5.561505e-09
+  dfcom       df         riv       lambda          fmi
+1  3879 3853.425 0.002052370 0.0020481666 0.0025657195
+2  3879 3875.475 0.000304308 0.0003042154 0.0008197252
+3  3879 2959.160 0.017678644 0.0173715391 0.0180349932
+
+[[23]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[24]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.305209e-02 3.466589e-04 2.125709e-07 3.469139e-04
+2    indegreeSender 5  4.320360e-04 5.471408e-09 3.903366e-13 5.471877e-09
+3 outdegreeReceiver 5 -8.961706e-05 5.428230e-09 7.603547e-11 5.519473e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3872.123 7.358388e-04 7.352978e-04 0.0012510309
+2  3879 3876.576 8.560939e-05 8.560206e-05 0.0006010781
+3  3879 3024.936 1.680890e-02 1.653103e-02 0.0171806260
+
+[[25]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.479837e-02 3.447457e-04 1.867906e-07 3.449698e-04
+2    indegreeSender 5  4.296050e-04 5.495415e-09 5.954388e-13 5.496129e-09
+3 outdegreeReceiver 5 -9.388837e-05 5.667041e-09 2.048894e-11 5.691628e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3872.899 0.0006501856 0.0006497632 0.0011654373
+2  3879 3876.434 0.0001300223 0.0001300054 0.0006454775
+3  3879 3791.965 0.0043385467 0.0043198050 0.0048445425
+
+[[26]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.417598e-02 3.407227e-04 4.582266e-07 3.412726e-04
+2    indegreeSender 5  4.308521e-04 5.462376e-09 1.424404e-12 5.464085e-09
+3 outdegreeReceiver 5 -8.932029e-05 5.459425e-09 1.594452e-11 5.478558e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3861.055 0.0016138398 0.0016112395 0.0021279965
+2  3879 3875.421 0.0003129197 0.0003128218 0.0008283342
+3  3879 3818.477 0.0035046604 0.0034924207 0.0040139507
+
+[[27]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.288008e-02 3.431101e-04 6.966224e-07 3.439460e-04
+2    indegreeSender 5  4.326660e-04 5.448295e-09 1.521868e-12 5.450121e-09
+3 outdegreeReceiver 5 -8.776713e-05 5.347146e-09 1.203962e-11 5.361594e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3845.614 0.0024363809 0.0024304593 0.0029488639
+2  3879 3875.281 0.0003351951 0.0003350827 0.0008506023
+3  3879 3839.605 0.0027019175 0.0026946368 0.0032137146
+
+[[28]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.424475e-02 3.427023e-04 7.506005e-06 3.517095e-04
+2    indegreeSender 5  4.305318e-04 5.472608e-09 1.549382e-11 5.491200e-09
+3 outdegreeReceiver 5 -9.219788e-05 5.439168e-09 2.201545e-10 5.703354e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 2332.765 0.026282886 0.025609787 0.026444109
+2  3879 3821.554 0.003397389 0.003385886 0.003907052
+3  3879 1239.358 0.048570928 0.046321071 0.047856343
+
+[[29]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.548868e-02 3.424012e-04 3.480915e-06 3.465783e-04
+2    indegreeSender 5  4.290046e-04 5.484741e-09 6.498969e-12 5.492540e-09
+3 outdegreeReceiver 5 -9.527628e-05 5.542912e-09 1.251922e-11 5.557935e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3362.555 0.012199425 0.012052393 0.012639487
+2  3879 3863.957 0.001421902 0.001419883 0.001936351
+3  3879 3839.407 0.002710320 0.002702994 0.003222094
+
+[[30]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0251278038 3.421400e-04 4.699038e-06 3.477789e-04
+2    indegreeSender 5  0.0004294278 5.492296e-09 9.853140e-12 5.504120e-09
+3 outdegreeReceiver 5 -0.0000965828 5.695814e-09 2.229236e-11 5.722565e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3049.666 0.016481104 0.016213881 0.016858424
+2  3879 3851.483 0.002152791 0.002148167 0.002665928
+3  3879 3779.208 0.004696578 0.004674623 0.005200943
+
+[[31]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0237182785 3.419370e-04 3.746722e-07 3.423866e-04
+2    indegreeSender 5  0.0004313986 5.467938e-09 8.955626e-13 5.469013e-09
+3 outdegreeReceiver 5 -0.0000902360 5.556512e-09 1.057782e-11 5.569205e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3865.458 0.0013148817 0.0013131550 0.0018294779
+2  3879 3876.095 0.0001965412 0.0001965026 0.0007119855
+3  3879 3848.830 0.0022844168 0.0022792102 0.0027972604
+
+[[32]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.407870e-02 3.443327e-04 3.216551e-07 3.447187e-04
+2    indegreeSender 5  4.309207e-04 5.469976e-09 8.762377e-13 5.471028e-09
+3 outdegreeReceiver 5 -9.044733e-05 5.466371e-09 1.488517e-11 5.484233e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3867.965 0.0011209687 0.0011197135 0.0016358020
+2  3879 3876.118 0.0001922285 0.0001921915 0.0007076736
+3  3879 3825.172 0.0032676524 0.0032570096 0.0037777506
+
+[[33]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.265701e-02 3.485220e-04 2.148599e-07 3.487799e-04
+2    indegreeSender 5  4.326768e-04 5.467053e-09 3.743068e-13 5.467502e-09
+3 outdegreeReceiver 5 -8.875611e-05 5.420886e-09 5.857878e-12 5.427916e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3872.086 7.397865e-04 7.392396e-04 0.0012549756
+2  3879 3876.576 8.215911e-05 8.215236e-05 0.0005976302
+3  3879 3865.705 1.296735e-03 1.295056e-03 0.0018113552
+
+[[34]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[35]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.453619e-02 3.439107e-04 1.443656e-07 3.440839e-04
+2    indegreeSender 5  4.301374e-04 5.488368e-09 4.074722e-13 5.488857e-09
+3 outdegreeReceiver 5 -9.483348e-05 5.617275e-09 7.918748e-12 5.626777e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3874.098 5.037316e-04 0.0005034780 0.0010190680
+2  3879 3876.576 8.909144e-05 0.0000890835 0.0006045578
+3  3879 3859.802 1.691656e-03 0.0016887992 0.0022056836
+
+[[36]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.414416e-02 3.424277e-04 2.367444e-07 3.427118e-04
+2    indegreeSender 5  4.309231e-04 5.462657e-09 8.023093e-13 5.463620e-09
+3 outdegreeReceiver 5 -8.998293e-05 5.411501e-09 1.320352e-11 5.427345e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3871.211 0.0008296448 0.0008289570 0.001344763
+2  3879 3876.202 0.0001762460 0.0001762149 0.000691694
+3  3879 3834.104 0.0029278789 0.0029193314 0.003439036
+
+[[37]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0249420855 3.437816e-04 2.896541e-06 3.472575e-04
+2    indegreeSender 5  0.0004297536 5.480469e-09 5.641498e-12 5.487239e-09
+3 outdegreeReceiver 5 -0.0000939758 5.502429e-09 3.815681e-11 5.548217e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3501.568 0.010110631 0.010009430 0.010574401
+2  3879 3866.521 0.001235259 0.001233735 0.001749957
+3  3879 3608.744 0.008321446 0.008252771 0.008801950
+
+[[38]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0240972306 3.442846e-04 3.056905e-07 3.446514e-04
+2    indegreeSender 5  0.0004308413 5.471918e-09 7.575348e-13 5.472827e-09
+3 outdegreeReceiver 5 -0.0000907079 5.475326e-09 7.602199e-12 5.484449e-09
+  dfcom       df          riv      lambda          fmi
+1  3879 3868.632 0.0010654808 0.001064347 0.0015803750
+2  3879 3876.254 0.0001661286 0.000166101 0.0006815784
+3  3879 3860.218 0.0016661362 0.001663365 0.0021802068
+
+[[39]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.439278e-02 3.450373e-04 7.705981e-07 3.459620e-04
+2    indegreeSender 5  4.303596e-04 5.485855e-09 2.079399e-12 5.488350e-09
+3 outdegreeReceiver 5 -9.459309e-05 5.546352e-09 3.182395e-11 5.584541e-09
+  dfcom       df          riv      lambda          fmi
+1  3879 3840.118 0.0026800512 0.002672888 0.0031919075
+2  3879 3874.463 0.0004548568 0.000454650 0.0009702166
+3  3879 3684.628 0.0068853800 0.006838296 0.0073769410
+
+[[40]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.407625e-02 3.453679e-04 3.312172e-06 3.493425e-04
+2    indegreeSender 5  4.308365e-04 5.474930e-09 5.907465e-12 5.482018e-09
+3 outdegreeReceiver 5 -9.174385e-05 5.446037e-09 2.541854e-11 5.476539e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3409.933 0.011508327 0.011377393 0.011956732
+2  3879 3865.731 0.001294804 0.001293129 0.001809426
+3  3879 3743.481 0.005600815 0.005569620 0.006100481
+
+[[41]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[42]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.471624e-02 3.488179e-04 8.341182e-07 3.498188e-04
+2    indegreeSender 5  4.297114e-04 5.495270e-09 2.508727e-12 5.498281e-09
+3 outdegreeReceiver 5 -9.309932e-05 5.511230e-09 4.573934e-11 5.566117e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3835.559 0.0028695255 0.0028613148 0.003380853
+2  3879 3873.754 0.0005478298 0.0005475298 0.001063143
+3  3879 3511.117 0.0099591586 0.0098609518 0.010424473
+
+[[43]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.451576e-02 3.531128e-04 2.224153e-06 3.557817e-04
+2    indegreeSender 5  4.298484e-04 5.509787e-09 5.051099e-12 5.515848e-09
+3 outdegreeReceiver 5 -9.643695e-05 5.614443e-09 8.124816e-11 5.711941e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3650.303 0.007558444 0.007501743 0.008045086
+2  3879 3868.219 0.001100100 0.001098891 0.001614957
+3  3879 2982.857 0.017365531 0.017069117 0.017727508
+
+[[44]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[45]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.388737e-02 3.459525e-04 4.043573e-07 3.464378e-04
+2    indegreeSender 5  4.310675e-04 5.474281e-09 1.198279e-12 5.475719e-09
+3 outdegreeReceiver 5 -8.998166e-05 5.490287e-09 1.363325e-11 5.506647e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3864.234 0.0014025875 0.0014006230 0.001917064
+2  3879 3875.724 0.0002626709 0.0002626019 0.000778100
+3  3879 3832.791 0.0029797891 0.0029709363 0.003490792
+
+[[46]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0242643470 3.420831e-04 3.805351e-07 3.425397e-04
+2    indegreeSender 5  0.0004307288 5.478254e-09 1.288219e-12 5.479800e-09
+3 outdegreeReceiver 5 -0.0000953707 5.574572e-09 2.930944e-12 5.578090e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3865.184 0.0013348865 0.0013331070 0.0018494562
+2  3879 3875.609 0.0002821817 0.0002821021 0.0007976055
+3  3879 3873.065 0.0006309242 0.0006305264 0.0011461882
+
+[[47]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[48]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.436982e-02 3.435091e-04 4.760063e-06 3.492212e-04
+2    indegreeSender 5  4.304075e-04 5.477576e-09 9.124492e-12 5.488525e-09
+3 outdegreeReceiver 5 -9.272821e-05 5.480084e-09 7.441218e-11 5.569379e-09
+  dfcom       df         riv     lambda         fmi
+1  3879 3038.544 0.016628603 0.01635661 0.017003420
+2  3879 3854.428 0.001998948 0.00199496 0.002512406
+3  3879 3063.730 0.016294389 0.01603314 0.016674843
+
+[[49]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.504833e-02 3.402757e-04 2.574650e-06 3.433653e-04
+2    indegreeSender 5  4.296698e-04 5.476690e-09 4.030701e-12 5.481527e-09
+3 outdegreeReceiver 5 -9.187383e-05 5.607912e-09 2.314271e-11 5.635683e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3564.885 0.0090796373 0.0089979393 0.009553452
+2  3879 3870.662 0.0008831686 0.0008823893 0.001398241
+3  3879 3769.612 0.0049521561 0.0049277531 0.005455277
+
+[[50]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.434833e-02 3.502993e-04 3.020743e-07 3.506618e-04
+2    indegreeSender 5  4.302045e-04 5.508992e-09 1.146211e-12 5.510367e-09
+3 outdegreeReceiver 5 -9.771956e-05 5.698931e-09 1.156386e-11 5.712807e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3868.991 0.0010347984 0.0010337287 0.0015497249
+2  3879 3875.800 0.0002496741 0.0002496118 0.0007651065
+3  3879 3845.645 0.0024349527 0.0024290381 0.0029474392
+
+[[51]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.333678e-02 3.442938e-04 6.349301e-07 3.450557e-04
+2    indegreeSender 5  4.318521e-04 5.471037e-09 1.212785e-12 5.472493e-09
+3 outdegreeReceiver 5 -9.113248e-05 5.557539e-09 4.070237e-11 5.606381e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3850.285 0.0022129825 0.0022080960 0.0027259875
+2  3879 3875.705 0.0002660085 0.0002659378 0.0007814367
+3  3879 3582.009 0.0087885759 0.0087120098 0.0092650281
+
+[[52]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.440689e-02 3.464958e-04 3.268061e-07 3.468880e-04
+2    indegreeSender 5  4.302743e-04 5.482991e-09 6.693432e-13 5.483794e-09
+3 outdegreeReceiver 5 -9.191859e-05 5.477333e-09 2.065768e-11 5.502122e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3867.832 0.0011318096 0.0011305301 0.0016466307
+2  3879 3876.353 0.0001464916 0.0001464701 0.0006619445
+3  3879 3785.394 0.0045257831 0.0045053927 0.0050309423
+
+[[53]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.509256e-02 3.417522e-04 3.588435e-06 3.460583e-04
+2    indegreeSender 5  4.295780e-04 5.475052e-09 5.567453e-12 5.481733e-09
+3 outdegreeReceiver 5 -9.264337e-05 5.477504e-09 5.550825e-11 5.544114e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3334.551 0.012600131 0.012443343 0.013035128
+2  3879 3866.716 0.001220252 0.001218765 0.001734969
+3  3879 3365.246 0.012160632 0.012014527 0.012601174
+
+[[54]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[55]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.377116e-02 3.440865e-04 3.185566e-06 3.479091e-04
+2    indegreeSender 5  4.313358e-04 5.464634e-09 5.812708e-12 5.471609e-09
+3 outdegreeReceiver 5 -9.040073e-05 5.391311e-09 4.159931e-11 5.441230e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3436.680 0.011109648 0.010987580 0.011562640
+2  3879 3865.977 0.001276435 0.001274808 0.001791081
+3  3879 3554.150 0.009259191 0.009174244 0.009731334
+
+[[56]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.427851e-02 3.453515e-04 6.249859e-07 3.461015e-04
+2    indegreeSender 5  4.305297e-04 5.480857e-09 1.519253e-12 5.482680e-09
+3 outdegreeReceiver 5 -9.228184e-05 5.538139e-09 2.676160e-11 5.570253e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3851.111 0.0021716516 0.0021669457 0.0026847477
+2  3879 3875.297 0.0003326312 0.0003325206 0.0008480394
+3  3879 3735.016 0.0057986846 0.0057652537 0.0062972123
+
+[[57]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.418589e-02 3.468601e-04 5.612398e-07 3.475336e-04
+2    indegreeSender 5  4.307077e-04 5.476365e-09 1.334739e-12 5.477967e-09
+3 outdegreeReceiver 5 -9.068284e-05 5.485517e-09 2.313781e-11 5.513282e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3855.482 0.0019416696 0.0019379068 0.0024552409
+2  3879 3875.547 0.0002924727 0.0002923871 0.0008078934
+3  3879 3765.381 0.0050615793 0.0050360888 0.0055641479
+
+[[58]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.335325e-02 3.397410e-04 7.148774e-07 3.405988e-04
+2    indegreeSender 5  4.317806e-04 5.458332e-09 2.316848e-12 5.461112e-09
+3 outdegreeReceiver 5 -8.865071e-05 5.402018e-09 1.215148e-11 5.416600e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3843.663 0.0025250207 0.0025186610 0.003037283
+2  3879 3874.055 0.0005093531 0.0005090937 0.001024687
+3  3879 3839.666 0.0026993199 0.0026920531 0.003211124
+
+[[59]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.582863e-02 3.466169e-04 9.075258e-06 3.575072e-04
+2    indegreeSender 5  4.282888e-04 5.503682e-09 1.923813e-11 5.526768e-09
+3 outdegreeReceiver 5 -9.758266e-05 5.648328e-09 8.044903e-11 5.744866e-09
+  dfcom       df         riv     lambda         fmi
+1  3879 2007.970 0.031418866 0.03046179 0.031426040
+2  3879 3796.865 0.004194601 0.00417708 0.004701216
+3  3879 3003.577 0.017091579 0.01680437 0.017458396
+
+[[60]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[61]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[62]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.498707e-02 3.446493e-04 2.244764e-06 3.473431e-04
+2    indegreeSender 5  4.297606e-04 5.481914e-09 3.833632e-12 5.486514e-09
+3 outdegreeReceiver 5 -9.456147e-05 5.554129e-09 1.879257e-11 5.576680e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3636.588 0.0078158177 0.0077552044 0.008300456
+2  3879 3871.115 0.0008391883 0.0008384847 0.001354299
+3  3879 3801.318 0.0040602383 0.0040438194 0.004567412
+
+[[63]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.368154e-02 3.498454e-04 3.385089e-07 3.502516e-04
+2    indegreeSender 5  4.312587e-04 5.490686e-09 1.223245e-12 5.492154e-09
+3 outdegreeReceiver 5 -9.427845e-05 5.593724e-09 1.714126e-11 5.614294e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3867.469 0.0011611149 0.0011597682 0.0016759022
+2  3879 3875.697 0.0002673427 0.0002672712 0.0007827705
+3  3879 3813.365 0.0036772489 0.0036637762 0.0041859151
+
+[[64]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.379097e-02 3.465893e-04 1.302035e-07 3.467456e-04
+2    indegreeSender 5  4.311270e-04 5.482380e-09 2.316617e-13 5.482658e-09
+3 outdegreeReceiver 5 -9.380679e-05 5.505662e-09 2.697635e-11 5.538033e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3874.492 4.508052e-04 4.506020e-04 0.0009661669
+2  3879 3876.576 5.070682e-05 5.070425e-05 0.0005661983
+3  3879 3731.485 5.879696e-03 5.845328e-03 0.0063777461
+
+[[65]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[66]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.411333e-02 3.431946e-04 6.668946e-07 3.439948e-04
+2    indegreeSender 5  4.307751e-04 5.478000e-09 2.189573e-12 5.480627e-09
+3 outdegreeReceiver 5 -9.152927e-05 5.628756e-09 1.244731e-11 5.643693e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3847.844 0.0023318361 0.0023264113 0.0028445697
+2  3879 3874.280 0.0004796436 0.0004794136 0.0009949918
+3  3879 3840.734 0.0026536532 0.0026466300 0.0031655803
+
+[[67]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.382451e-02 3.435154e-04 3.218191e-07 3.439016e-04
+2    indegreeSender 5  4.313183e-04 5.466550e-09 7.746748e-13 5.467480e-09
+3 outdegreeReceiver 5 -9.127446e-05 5.432839e-09 3.465882e-11 5.474429e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3867.926 0.0011242082 0.0011229457 0.0016390378
+2  3879 3876.234 0.0001700542 0.0001700253 0.0006855033
+3  3879 3645.173 0.0076554051 0.0075972451 0.0081412998
+
+[[68]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0239419498 3.433847e-04 2.976638e-07 3.437419e-04
+2    indegreeSender 5  0.0004309688 5.469573e-09 8.394590e-13 5.470580e-09
+3 outdegreeReceiver 5 -0.0000892747 5.450971e-09 3.969119e-11 5.498600e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3868.928 0.0010402229 0.0010391420 0.0015551438
+2  3879 3876.160 0.0001841736 0.0001841397 0.0006996202
+3  3879 3584.961 0.0087377884 0.0086621008 0.0092146920
+
+[[69]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[70]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[71]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.391600e-02 3.455570e-04 8.240640e-07 3.465459e-04
+2    indegreeSender 5  4.310669e-04 5.484212e-09 2.490810e-12 5.487201e-09
+3 outdegreeReceiver 5 -9.537781e-05 5.591885e-09 5.473559e-11 5.657568e-09
+  dfcom       df          riv      lambda         fmi
+1  3879 3835.752 0.0028616892 0.002853523 0.003373039
+2  3879 3873.776 0.0005450139 0.000544717 0.001060329
+3  3879 3393.773 0.0117460765 0.011609708 0.012191666
+
+[[72]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.412014e-02 3.432673e-04 4.276228e-07 3.437805e-04
+2    indegreeSender 5  4.311490e-04 5.460915e-09 1.376396e-12 5.462566e-09
+3 outdegreeReceiver 5 -9.265041e-05 5.398751e-09 1.393333e-11 5.415471e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3862.885 0.0014948914 0.0014926600 0.0020092337
+2  3879 3875.486 0.0003024539 0.0003023625 0.0008178717
+3  3879 3829.757 0.0030970126 0.0030874508 0.0036076573
+
+[[73]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.430786e-02 3.448609e-04 7.895011e-07 3.458083e-04
+2    indegreeSender 5  4.305387e-04 5.485524e-09 2.482341e-12 5.488503e-09
+3 outdegreeReceiver 5 -9.644029e-05 5.578900e-09 1.602616e-11 5.598131e-09
+  dfcom       df         riv       lambda         fmi
+1  3879 3838.531 0.002747198 0.0027396717 0.003258871
+2  3879 3873.792 0.000543031 0.0005427363 0.001058347
+3  3879 3820.136 0.003447165 0.0034353225 0.003956656
+
+[[74]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.476508e-02 3.436231e-04 2.546634e-07 3.439287e-04
+2    indegreeSender 5  4.300225e-04 5.481104e-09 4.646273e-13 5.481662e-09
+3 outdegreeReceiver 5 -9.497006e-05 5.555671e-09 2.313612e-11 5.583435e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3870.597 0.0008893351 0.0008885448 0.0014044020
+2  3879 3876.568 0.0001017227 0.0001017124 0.0006171812
+3  3879 3767.875 0.0049972982 0.0049724494 0.0055001929
+
+[[75]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.373407e-02 3.392190e-04 2.091820e-07 3.394700e-04
+2    indegreeSender 5  4.313434e-04 5.463360e-09 6.364590e-13 5.464123e-09
+3 outdegreeReceiver 5 -8.965854e-05 5.472799e-09 1.093404e-11 5.485920e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3872.084 0.0007399892 0.0007394420 0.001255178
+2  3879 3876.386 0.0001397951 0.0001397756 0.000655249
+3  3879 3846.453 0.0023974653 0.0023917312 0.002910043
+
+[[76]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[77]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0236331336 3.456869e-04 1.593047e-07 3.458781e-04
+2    indegreeSender 5  0.0004313368 5.487555e-09 2.970665e-13 5.487911e-09
+3 outdegreeReceiver 5 -0.0000956858 5.608179e-09 2.916827e-11 5.643181e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3873.712 5.530021e-04 5.526965e-04 0.001068312
+2  3879 3876.576 6.496149e-05 6.495727e-05 0.000580444
+3  3879 3715.277 6.241228e-03 6.202517e-03 0.006737064
+
+[[78]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[79]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.399392e-02 3.452199e-04 6.839965e-08 3.453020e-04
+2    indegreeSender 5  4.309994e-04 5.471910e-09 2.324362e-13 5.472189e-09
+3 outdegreeReceiver 5 -9.078435e-05 5.449721e-09 1.474938e-12 5.451491e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3875.868 2.377603e-04 2.377038e-04 0.0007531956
+2  3879 3876.576 5.097368e-05 5.097108e-05 0.0005664650
+3  3879 3875.347 3.247737e-04 3.246683e-04 0.0008401844
+
+[[80]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.359974e-02 3.420788e-04 3.648424e-07 3.425166e-04
+2    indegreeSender 5  4.315393e-04 5.458174e-09 9.894447e-13 5.459361e-09
+3 outdegreeReceiver 5 -8.737242e-05 5.406194e-09 1.288335e-11 5.421654e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3865.932 0.0012798541 0.0012782181 0.0017944959
+2  3879 3875.981 0.0002175332 0.0002174858 0.0007329731
+3  3879 3835.802 0.0028596874 0.0028515329 0.0033710432
+
+[[81]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[82]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.398621e-02 3.458340e-04 2.481549e-07 3.461318e-04
+2    indegreeSender 5  4.310150e-04 5.476678e-09 7.272245e-13 5.477551e-09
+3 outdegreeReceiver 5 -9.291286e-05 5.496980e-09 1.005646e-11 5.509048e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3870.891 0.0008610659 0.0008603251 0.0013761576
+2  3879 3876.289 0.0001593428 0.0001593175 0.0006747938
+3  3879 3850.639 0.0021953432 0.0021905342 0.0027083873
+
+[[83]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.435368e-02 3.410566e-04 2.410508e-07 3.413458e-04
+2    indegreeSender 5  4.307619e-04 5.478251e-09 8.772963e-13 5.479303e-09
+3 outdegreeReceiver 5 -9.727247e-05 5.670553e-09 1.254553e-12 5.672059e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3871.024 0.0008481321 0.0008474134 0.0013632349
+2  3879 3876.118 0.0001921700 0.0001921331 0.0007076152
+3  3879 3875.708 0.0002654880 0.0002654176 0.0007809163
+
+[[84]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[85]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.533174e-02 3.501391e-04 3.497466e-06 3.543360e-04
+2    indegreeSender 5  4.289430e-04 5.501226e-09 6.000288e-12 5.508426e-09
+3 outdegreeReceiver 5 -9.383509e-05 5.578446e-09 7.097903e-11 5.663621e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3377.278 0.011986550 0.011844575 0.012429234
+2  3879 3865.540 0.001308862 0.001307151 0.001823466
+3  3879 3140.586 0.015268560 0.015038937 0.015665585
+
+[[86]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[87]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[88]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.378051e-02 3.477021e-04 3.019433e-07 3.480644e-04
+2    indegreeSender 5  4.313314e-04 5.470930e-09 7.278016e-13 5.471803e-09
+3 outdegreeReceiver 5 -9.151226e-05 5.395238e-09 6.836233e-12 5.403441e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3868.906 0.0010420760 0.0010409912 0.0015569949
+2  3879 3876.287 0.0001596368 0.0001596114 0.0006750877
+3  3879 3862.500 0.0015205037 0.0015181953 0.0020348073
+
+[[89]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.445096e-02 3.486319e-04 1.015808e-07 3.487538e-04
+2    indegreeSender 5  4.302529e-04 5.488141e-09 6.801330e-13 5.488957e-09
+3 outdegreeReceiver 5 -9.260844e-05 5.534688e-09 1.325419e-12 5.536278e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3875.188 0.0003496437 0.0003495215 0.0008650460
+2  3879 3876.342 0.0001487133 0.0001486912 0.0006641659
+3  3879 3875.578 0.0002873700 0.0002872874 0.0008027922
+
+[[90]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.432458e-02 3.442231e-04 7.333639e-07 3.451031e-04
+2    indegreeSender 5  4.303612e-04 5.481292e-09 1.768660e-12 5.483415e-09
+3 outdegreeReceiver 5 -9.010985e-05 5.569366e-09 6.309197e-12 5.576937e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3842.955 0.0025565884 0.0025500689 0.0030687697
+2  3879 3874.938 0.0003872064 0.0003870566 0.0009025949
+3  3879 3864.844 0.0013594072 0.0013575617 0.0018739437
+
+[[91]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[92]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.339833e-02 3.461379e-04 3.553895e-07 3.465643e-04
+2    indegreeSender 5  4.318843e-04 5.465955e-09 1.023690e-12 5.467183e-09
+3 outdegreeReceiver 5 -9.156413e-05 5.392567e-09 2.605101e-11 5.423828e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3866.563 0.0012320738 0.0012305576 0.0017467759
+2  3879 3875.941 0.0002247418 0.0002246913 0.0007401801
+3  3879 3735.085 0.0057970937 0.0057636811 0.0062956307
+
+[[93]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.454410e-02 3.426082e-04 3.600990e-06 3.469293e-04
+2    indegreeSender 5  4.301999e-04 5.479139e-09 6.739668e-12 5.487227e-09
+3 outdegreeReceiver 5 -9.281163e-05 5.557666e-09 6.354524e-11 5.633920e-09
+  dfcom       df         riv      lambda         fmi
+1  3879 3333.672 0.012612625 0.012455528 0.013047462
+2  3879 3863.165 0.001476072 0.001473896 0.001990442
+3  3879 3254.485 0.013720560 0.013534854 0.014140514
+
+[[94]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.381330e-02 3.456444e-04 1.080385e-06 3.469409e-04
+2    indegreeSender 5  4.311093e-04 5.481950e-09 3.037929e-12 5.485596e-09
+3 outdegreeReceiver 5 -9.511124e-05 5.514793e-09 1.215001e-11 5.529373e-09
+  dfcom       df          riv       lambda         fmi
+1  3879 3811.125 0.0037508535 0.0037368372 0.004259244
+2  3879 3872.768 0.0006650033 0.0006645613 0.001180245
+3  3879 3840.962 0.0026438010 0.0026368297 0.003155754
+
+[[95]]
+Class: mipo    m = 5 
+               term m estimate ubar  b  t dfcom df riv lambda fmi
+1       reciprocity 5       NA    0 NA NA     1 NA  NA     NA  NA
+2    indegreeSender 5       NA    0 NA NA     1 NA  NA     NA  NA
+3 outdegreeReceiver 5       NA    0 NA NA     1 NA  NA     NA  NA
+
+[[96]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  0.0236685184 3.437989e-04 1.037937e-07 3.439234e-04
+2    indegreeSender 5  0.0004314947 5.470517e-09 3.291893e-13 5.470912e-09
+3 outdegreeReceiver 5 -0.0000907927 5.558238e-09 1.020008e-11 5.570478e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3875.105 0.0003622830 3.621518e-04 0.0008776808
+2  3879 3876.576 0.0000722102 7.220498e-05 0.0005876880
+3  3879 3850.503 0.0022021530 2.197314e-03 0.0027151821
+
+[[97]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.336334e-02 3.429295e-04 5.835084e-08 3.429995e-04
+2    indegreeSender 5  4.319828e-04 5.457712e-09 1.985399e-13 5.457951e-09
+3 outdegreeReceiver 5 -8.970245e-05 5.417667e-09 1.197094e-11 5.432033e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3876.054 2.041849e-04 2.041432e-04 0.0007196276
+2  3879 3876.576 4.365344e-05 4.365153e-05 0.0005591492
+3  3879 3840.783 2.651534e-03 2.644522e-03 0.0031634666
+
+[[98]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.438944e-02 3.473011e-04 6.180309e-07 3.480427e-04
+2    indegreeSender 5  4.302075e-04 5.480819e-09 1.487356e-12 5.482604e-09
+3 outdegreeReceiver 5 -8.904924e-05 5.431137e-09 6.836577e-11 5.513176e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3851.824 0.0021354297 0.0021308794 0.0026486042
+2  3879 3875.341 0.0003256497 0.0003255437 0.0008410602
+3  3879 3152.735 0.0151052938 0.0148805191 0.0155048551
+
+[[99]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.422913e-02 3.459177e-04 1.673939e-07 3.461185e-04
+2    indegreeSender 5  4.307575e-04 5.478394e-09 3.307316e-13 5.478791e-09
+3 outdegreeReceiver 5 -9.376688e-05 5.523907e-09 2.478710e-11 5.553651e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3873.488 0.0005806949 5.803579e-04 0.0010959894
+2  3879 3876.576 0.0000724442 7.243896e-05 0.0005879218
+3  3879 3752.466 0.0053846896 5.355850e-03 0.0058855549
+
+[[100]]
+Class: mipo    m = 5 
+               term m      estimate         ubar            b            t
+1       reciprocity 5  2.353089e-02 3.481573e-04 8.278271e-07 3.491507e-04
+2    indegreeSender 5  4.315680e-04 5.479113e-09 1.996752e-12 5.481509e-09
+3 outdegreeReceiver 5 -9.292673e-05 5.502232e-09 1.964960e-11 5.525811e-09
+  dfcom       df          riv       lambda          fmi
+1  3879 3835.959 0.0028532862 0.0028451681 0.0033646604
+2  3879 3874.590 0.0004373157 0.0004371245 0.0009526834
+3  3879 3793.788 0.0042854458 0.0042671592 0.0047916724</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>pooled.average</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                  m          true estimate std.error statistic p.value riv
+reciprocity       5  2.357302e-02       NA        NA        NA      NA Inf
+indegreeSender    5  4.314136e-04       NA        NA        NA      NA Inf
+outdegreeReceiver 5 -9.114919e-05       NA        NA        NA      NA Inf
+                  2.5 % 97.5 % cov bias
+reciprocity          NA     NA  NA   NA
+indegreeSender       NA     NA  NA   NA
+outdegreeReceiver    NA     NA  NA   NA</code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

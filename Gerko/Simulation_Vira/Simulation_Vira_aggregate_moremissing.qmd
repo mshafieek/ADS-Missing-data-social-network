@@ -1,0 +1,519 @@
+---
+title: "Untitled"
+format: html
+---
+
+# Preparation
+```{r preparation}
+library(mice, warn.conflicts = FALSE)
+require(lattice)
+library(tidyverse)
+library(magrittr)
+library(dplyr) 
+library(purrr)
+library(furrr)  
+library(relevent)
+library(broom.mixed)
+library(rem)
+library(ggplot2)
+library(survival)
+library(remify)
+library(remstats)
+library(devtools)
+#library(remstimate)
+library(tibble)
+
+# set working directory to be the current directory
+# GV 4/6/23: Not necessary, because I created a Project
+#cur_dir = dirname(rstudioapi::getActiveDocumentContext()$path)
+#setwd(cur_dir)
+
+## 1. Read the data
+load("UUsummerschool.Rdata")
+rm(Twitter_data_rem3, WTCPoliceCalls, ClassIntercept, ClassIsFemale,
+   ClassIsTeacher, WTCPoliceIsICR, Class)
+```
+
+# Simulation
+```{r simulation, cache=TRUE}
+## 2. Ampute and then impute the data
+# renaming dataset for later convenience 
+apollo.renamed <- PartOfApollo_13
+apollo.renamed <- apollo.renamed %>% 
+  rename(
+    actor1 = sender,
+    actor2 = receiver
+  )
+
+# making the dataset a tibble 
+apollo.renamed <- as_tibble(apollo.renamed)
+
+# determine which column to condition on
+whichcol <- c("", "actor2", "actor1")
+names(whichcol) <- colnames(apollo.renamed)
+
+# create predictor matrix for imoutations
+pred <- make.predictorMatrix(apollo.renamed)
+pred[ ,"time"] <- 0
+pred
+
+# use the custom pmm method
+method <- make.method(apollo.renamed)
+method[c(2,3)] <- "pmm.conditional"
+
+#### set with sufficient actors & dyads
+set.seed(123) # fix seed to realize a sufficient set
+
+indic <- sample(1:nrow(apollo.renamed), 1500)
+remify(apollo.renamed[indic, ], model = "tie") %>% dim() 
+
+
+#### Combine the sufficient set and the incomplete set
+make_missing <- function(x, indic){
+  sufficient <- x[indic, ]
+  miss <- x[-c(indic), ] |>
+    ampute(prop = .8, 
+           mech = "MCAR",
+           patterns = c(1,0,1)) %>% 
+    .$amp
+  combined <- rbind(sufficient, 
+                    miss)
+  return(combined[order(combined$time), ]) # sort it all like apollo
+}
+
+MCAR_finite <- furrr::future_map(1:100, ~ { # map over 100 sims
+  apollo.renamed %>% 
+    make_missing(., indic) %>% 
+    mice(m = 5, 
+         maxit = 5,
+         method = method,
+         pred=pred,
+         whichcolumn = whichcol,
+         print = F)
+}, .options = furrr_options(seed = 123))
+
+#GV: NOT RUN
+#check if it is correct
+# MCAR_finite |> map(~.x %>%
+#   complete("long") |>
+#   summarize(all(actor1 != actor2)))
+```
+
+# Effects and function definition
+```{r functions, cache=TRUE}
+# creating functions 
+# Define effects
+effects <- ~ -1 + reciprocity(scaling = ("std")) +
+  indegreeSender() + outdegreeReceiver()
+
+# function to remify each imputed dataset
+
+#GV more efficient, because no storage
+rem_function <- function(data) {
+  # Perform the analysis as before
+  remify::remify(edgelist = data, model = "tie") %>% 
+    remstats(tie_effects = effects)
+}
+
+
+# function to create a dataset for the cox model 
+cox_sets_function <- function(statsObject_imp, apollo_data) {
+  # take the single riskset 
+  # remove the id column
+  risk_sets <- attr(statsObject_imp, "riskset") %>% select(-'id')
+  # creating one set with all risksets for each time point 
+  combined <- merge(risk_sets, apollo_data$time, by=NULL)  %>% 
+    rename(time = y) %>% 
+    .[, c("time", "sender", "receiver")] %>% 
+    mutate(sender = as.numeric(sender), 
+           receiver = as.numeric(receiver))
+  
+  # GV: Calculate divergence
+  diff <- apollo_data[rep(seq_len(nrow(apollo_data)), each = 240), ] %>% 
+    data.matrix() %>% 
+    .[, 1:3] - combined
+  # GV: identify non-divergence
+  combined$status <- 
+    rowSums(diff == 0) == ncol(diff)
+  
+  #combining the dataset with riskset to the statistic
+  reciprocity <- statsObject_imp[,,1]
+  indegreeSender <- statsObject_imp[,,2]
+  outdegreeReceiver <- statsObject_imp[,,3]
+  
+  recip.vector <- c(reciprocity)
+  combined$reciprocity <- recip.vector
+  
+  indegSen.vector <- c(indegreeSender)
+  combined$indegreeSender <- indegSen.vector
+  
+  outRec.vector <- c(outdegreeReceiver)
+  combined$outdegreeReceiver <- outRec.vector
+  
+  combined$status <- as.integer(as.logical(combined$status))
+  
+  return(combined)
+}
+```
+```{r true params}
+######################### cox model on complete data ######################### 
+# Prepare event history
+true.reh <- remify(edgelist = apollo.renamed, 
+                   model = "tie")
+# calculate stats
+stats <- remstats(tie_effects = effects, 
+                                  reh = true.reh)
+# use the function to create the correct format of the dataframe
+true.cox.set <- cox_sets_function(stats, PartOfApollo_13)
+# fit cox model 
+true.cox.fit <- coxph(Surv(time, status) ~ reciprocity + indegreeSender + 
+                        outdegreeReceiver, 
+                      data=true.cox.set)
+true <- coefficients(true.cox.fit)
+```
+
+```{r coxmodels1, cache=TRUE}
+# prepare the data for the cox model
+t1 <- Sys.time()
+cox.models.sims <- MCAR_finite[1:10] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+Sys.time() - t1
+```
+```{r coxmodels2, cache = TRUE}
+cox.models.sims2 <- MCAR_finite[11:20] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels3, cache = TRUE}
+cox.models.sims3 <- MCAR_finite[21:30] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels4, cache = TRUE}
+cox.models.sims4 <- MCAR_finite[31:40] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels5, cache = TRUE}
+cox.models.sims5 <- MCAR_finite[41:50] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels6, cache = TRUE}
+cox.models.sims6 <- MCAR_finite[51:60] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels7, cache = TRUE}
+cox.models.sims7 <- MCAR_finite[61:70] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels8, cache = TRUE}
+cox.models.sims8 <- MCAR_finite[71:80] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels9, cache = TRUE}
+cox.models.sims9 <- MCAR_finite[81:90] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r coxmodels10, cache = TRUE}
+cox.models.sims10 <- MCAR_finite[91:100] %>% 
+  map(~.x %>% # for every simulated multiple imputation....
+        complete("all") %>% # create a list of completed data sets
+        map(~.x %>% # GV: changed into regular pipe - for every completed data set....
+              rem_function() %>% # GV: removed .x - remify the imputed set
+              cox_sets_function(apollo_data=PartOfApollo_13) %$% 
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>% 
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true, # add true
+               df = m-1,  # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic), 
+                                 pmax(df, 0.001), 
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value, 
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+        column_to_rownames("term")) # create the sets for cox model
+```
+```{r combinesims, cache=TRUE}
+#stitch the lists together
+sims <- list(cox.models.sims,
+             cox.models.sims2,
+             cox.models.sims3,
+             cox.models.sims4,
+             cox.models.sims5,
+             cox.models.sims6,
+             cox.models.sims7,
+             cox.models.sims8,
+             cox.models.sims9,
+             cox.models.sims10) %>% 
+  purrr::flatten() # make a single flat list instead of a list of lists
+```
+```{r}
+save(sims, file = "sims_moremissing.RData")
+```
+
+# Average sims
+```{r}
+Reduce("+", sims) / length(MCAR_finite)
+```
+
+# Long data frame
+```{r}
+reciprocity <- sims %>% 
+  map(~.x %>% .["reciprocity", ]) %>% #select row reciprocity
+        do.call("rbind", .)
+indegreeSender <- sims %>% 
+  map(~.x %>% .["indegreeSender", ]) %>% 
+        do.call("rbind", .)
+outdegreeReceiver <- sims %>% 
+  map(~.x %>% .["outdegreeReceiver", ]) %>% 
+        do.call("rbind", .)
+colMeans(reciprocity)
+```
+
+# Plot
+```{r}
+library(ggplot2)
+reciprocity %>% 
+  ggplot(aes(x = estimate)) + 
+  geom_density()
+outdegreeReceiver %>% 
+  ggplot(aes(x = estimate)) + 
+  geom_density()
+indegreeSender %>% 
+  ggplot(aes(x = estimate)) + 
+  geom_density()
+```
+
+
