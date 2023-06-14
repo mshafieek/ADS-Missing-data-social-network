@@ -22,28 +22,56 @@ str(PartOfApollo_13)
 summary(PartOfApollo_13)
 head(PartOfApollo_13)
 
-Apollo_tibble <- as_tibble(PartOfApollo_13)
+Apollo_tibble <- as_tibble(PartOfApollo_13) %>% 
+  rename(
+    actor1 = sender,
+    actor2 = receiver
+  )
+
 
 ############## missing data 
+# definieer predictor relaties
+# determine which column to condition on
+whichcol <- c("", "actor2", "actor1")
+names(whichcol) <- colnames(Apollo_tibble)
 
-mcar_simulations <- furrr::future_map(1:3, ~ {
-  Apollo_tibble %>% 
-    ampute(prop = .2, 
-           mech = "MCAR", patterns = c(1, 1, 0)) %>%
+# create predictor matrix for imoutations
+pred <- make.predictorMatrix(Apollo_tibble)
+pred[, "time"] <- 0
+pred
+
+# use the custom pmm method
+method <- make.method(Apollo_tibble)
+method[c(2,3)] <- "pmm.conditional"
+
+#### set with sufficient actors & dyads
+set.seed(123) # fix seed to realize a sufficient set
+indic <- sample(1:nrow(Apollo_tibble), 1500)
+remify(Apollo_tibble[indic, ], model = "tie") %>% dim() 
+
+#### Combine the sufficient set and the incomplete set
+make_missing <- function(x, indic){
+  sufficient <- x[indic, ]
+  miss <- x[-c(indic), ] |>
+    ampute(prop = .4, 
+           mech = "MCAR",
+           patterns = c(1,1,0)) %>% 
     .$amp
+  combined <- rbind(sufficient, 
+                    miss)
+  return(combined[order(combined$time), ]) # sort it all like apollo
+}
+# runs simulaties
+mcar_simulations <- furrr::future_map(1:2, ~ {
+  Apollo_tibble %>% 
+    make_missing(indic = indic) %>% 
+    mice(m = 5, 
+         maxit = 5,
+         method = method,
+         pred=pred,
+         whichcolumn = whichcol,
+         print = F)
 }, .options = furrr_options(seed = 123))
-
-
-############ imputing data
-
-imputed_datasets <- furrr::future_map(mcar_simulations, ~ {
-  mids <- mice(.x, m = 5, maxit = 5, method = "pmm", print = FALSE)
-  pred <- mids$pred
-  pred[ ,"time"] <- 0
-  imp <- mice(.x, m = 5, maxit = 5, pred = pred, method = "pmm", print = FALSE)
-  imp
-}, .options = furrr_options(seed = 123))
-
 
 ########## REM
 # Definieer effects
@@ -54,10 +82,6 @@ effects <- ~ -1 + reciprocity(scaling = ("std")) +
 analysis_function <- function(data) {
   # Rename columns
   data %>% 
-    rename(
-      actor1 = sender,  # vervang 'sender' door de juiste kolomnaam
-      actor2 = receiver  # vervang 'receiver' door de juiste kolomnaam
-    ) %>% 
     remify::remify(model = "tie") %>% 
     remstats(tie_effects = effects) # GV hier roep je de effects weer aan
 }
@@ -110,8 +134,8 @@ prepare_coxph_data <- function(statsObject_imp, apollo) {
 }
 
 # Pas de analyse toe op elke imputed dataset
-statsObject_imp <- 
-  imputed_datasets %>% 
+evaluations_on_simulation <- 
+  mcar_simulations %>% 
   map(~.x %>% # for every simulation
         complete("all") %>% # for every imputation
         map(~.x %>% 
@@ -123,5 +147,42 @@ statsObject_imp <-
                       outdegreeReceiver))) # run cox ph
 
 # Next step: pooling
-      
+
+# definieer de true analyse
+true.reh <- remify(edgelist = Apollo_tibble, 
+                   model = "tie")
+# calculate stats
+stats <- remstats(tie_effects = effects, 
+                  reh = true.reh)
+# use the function to create the correct format of the dataframe
+true.cox.set <- prepare_coxph_data(stats, PartOfApollo_13)
+# fit cox model 
+true.cox.fit <- coxph(Surv(time, status) ~ reciprocity + indegreeSender + 
+                        outdegreeReceiver, 
+                      data=true.cox.set)
+true <- coefficients(true.cox.fit)
+
+# pool de resultaten
+ pool <- 
+   evaluations_on_simulation %>% 
+   map(~.x %>% pool(custom.t = ".data$b + .data$b / .data$m") %>% 
+   .$pooled %>% 
+   mutate(true = true, # add true
+          df = m-1,  # correct df
+          riv = Inf, # correct riv
+          std.error = sqrt(t), # standard error
+          statistic = estimate / std.error, # test statistic
+          p.value = 2 * (pt(abs(statistic), 
+                            pmax(df, 0.001), 
+                            lower.tail = FALSE)), # correct p.value
+          `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+          `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+          cov = `2.5 %` < true & true < `97.5 %`, # coverage
+          bias = estimate - true) %>% # bias
+   select(term, m, true, estimate, std.error, statistic, p.value, 
+          riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+   column_to_rownames("term"))
+ 
+ # average the pool
+ 
       
