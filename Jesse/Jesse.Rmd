@@ -49,7 +49,7 @@ remify(apollo[indic, ], model = "tie") %>% dim()
 make_missing <- function(x, indic){
   sufficient <- x[indic, ]
   miss <- x[-c(indic), ] |>
-    # prop is set to .4 to get close to .2 missingness since almost half of the dataset is used for the sufficient set
+    # prop is set to .33 to get close to .2 missingness since almost half of the dataset is used for the sufficient set
     ampute(prop = .33, 
            mech = "MCAR",
            patterns = matrix(c(1,0,1,
@@ -162,7 +162,7 @@ true <- coefficients(true.cox.fit)
 
 ###### Running the REM on all simulations
 Results <- 
-  mbased_finite_apollo[1:100] %>% 
+  mbased_finite_apollo[1:1000] %>% 
   map(~.x %>% # for every simulation
         complete("all") %>% 
         map(~.x %>% # for every imputation
