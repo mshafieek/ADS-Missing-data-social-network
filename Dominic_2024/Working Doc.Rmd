@@ -1,1 +1,338 @@
+---
+title: "Working Doc - Thesis"
+author: "Dominic Comerford"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: 
+  html_document:
+    theme: cosmo
+---
+```{r, include = FALSE}
+knitr::opts_chunk$set(message = FALSE)
+```
+
+
+```{r, warning = FALSE}
+##### Load packages
+packages_to_install <- c("purrr", "furrr", "magrittr", "dplyr", 
+                         "tibble", "data.table", "survival", "tidyverse", 
+                         "devtools", "reprex")
+
+for (pkg in packages_to_install) {
+  if (!require(pkg, character.only = TRUE)) {
+    # If not, install the package
+    install.packages(pkg)
+  }
+}
+
+library(purrr, warn.conflicts = FALSE)    # for functional programming
+library(furrr, warn.conflicts = FALSE)    # for functional futures
+library(magrittr, warn.conflicts = FALSE) # for pipes
+library(dplyr, warn.conflicts = FALSE)    # for data manipulation
+library(tibble, warn.conflicts = FALSE)     # for tibbles
+library(data.table, warn.conflicts = FALSE)   
+library(survival, warn.conflicts = FALSE) # for REM analysis
+library(tidyverse, warn.conflicts = FALSE)  
+library(tidyr, warn.conflicts = FALSE)
+library(reprex, warn.conflicts = FALSE)   # reproducible code
+
+devtools::install_github("TilburgNetworkGroup/remify")
+devtools::install_github("gerkovink/mice@match_conditional_current") 
+devtools::install_github("TilburgNetworkGroup/remstats")
+
+library(mice, warn.conflicts = FALSE)     # for imputation and amputation
+library(remstats, warn.conflicts = FALSE) # for REM statistics
+library(remify, warn.conflicts = FALSE)   # for converting  
+
+##### Load data
+con <- url("https://github.com/mshafieek/ADS-Missing-data-social-network/raw/main/literature_%20REM/Tutorial_REM_REH_DATA/UUsummerschool.Rdata")
+load(con)
+apollo <- as_tibble(PartOfApollo_13) %>% 
+  rename(
+    actor1 = sender,
+    actor2 = receiver
+  )
+
+rm(Class, PartOfApollo_13, Twitter_data_rem3, WTCPoliceCalls, ClassIntercept, 
+   ClassIsFemale, ClassIsTeacher, WTCPoliceIsICR, con)
+```
+
+
+```{r, include=FALSE}
+set.seed(123) # fix seed to realize a sufficient set
+indic <- sample(1:nrow(apollo), 1500)
+
+remify(apollo[indic, ], model = "tie") %>% dim()
+#### Combine the sufficient set and the incomplete set
+make_missing <- function(x, indic){
+  sufficient <- x[indic, ]
+  miss <- x[-c(indic), ] |>
+    # prop is set to .4 to get close to .2 missingness since almost half of the dataset is used for the sufficient set
+    ampute(prop = .5, 
+           mech = "MCAR",
+           patterns = matrix(c(1,1,0, # missing in actor 2
+                               1,0,1, # missing in actor 1
+                               0,1,1, # missing in time
+                               0,0,0, # missing in all
+                               1,0,0, # missing in actor 1 + 2
+                               0,1,0, # missing in time + actor 2
+                               0,0,1  # missing in time + actor 1
+                               ),
+                             nrow=7,  # change to number of missingness patterns above
+                             byrow=TRUE)) %>% 
+    .$amp
+  combined <- rbind(sufficient, miss)
+  return(combined[order(combined$time), ]) # sort it all like apollo
+}
+
+whichcol <- c("", "actor2", "actor1") # Ensure that actor 1 != actor 2 in imputations
+names(whichcol) <- colnames(apollo)
+
+## predictor matrix
+pred <- make.predictorMatrix(apollo)
+pred[ ,"time"] <- 0 # using time for imputation creates loops
+## use the pmm.conditional method
+method <- make.method(apollo)
+method[1] <- "norm" # imputation of time correct? Something Like Last Obs Carried Forward?
+method[c(2,3)] <- "pmm.conditional"
+```
+
+```{r, echo=FALSE}
+##### Model-based finite populations
+mbased_finite_apollo <-
+  furrr::future_map(1:10, ~ {   # start of with 10 simulations for testing
+    make_missing(apollo, indic) %>%
+      mice(m = 5, 
+           maxit = 5,
+           method = method,
+           whichcolumn = whichcol,
+           predictorMatrix = pred,
+           print = FALSE)
+  }, .options = furrr_options(seed = 123))
+
+```
+
+
+```{r, echo=FALSE}
+##### Missing data pattern of all simulations.
+missing_pattern <- mbased_finite_apollo %>% 
+  map(~.x %>% .$data) %>%
+  do.call("rbind", .) %>%
+  md.pattern()
+```
+
+
+```{r, echo=FALSE}
+##### Defining effects for the relational event model
+effects <- ~ -1 + reciprocity(scaling = ("std")) + indegreeSender() + outdegreeReceiver()
+
+##### Function to get the statistics of the previously defined effects.
+stats_function <- function(data) {
+  # remify the data
+  reh <- remify::remify(edgelist = data, model = "tie")
+  # calculate effect statistics
+  statsObject_imp <- remstats(reh = reh, tie_effects = effects)
+  # Return the statistics
+  return(statsObject_imp)
+}
+```
+
+
+
+```{r}
+##### Function for making the data compatible with coxph()
+prepare_coxph_data <- function(statsObject, apollo) {
+  risk_sets <- attr(statsObject, "riskset")
+  risk_sets <- risk_sets %>% select(-'id')
+  
+  # Get the times
+  time <- apollo$time
+  
+  # merge riskset with each timepoint
+  combined <- merge(risk_sets, time, by = NULL)
+  
+  combined <- combined %>% rename("time" = "y")
+  combined <- lapply(combined, as.numeric)
+  combined <- as.data.frame(combined)
+  
+  # Create matrices for subtraction to make a status column for coxph
+  combined_matrix <- data.matrix(combined)
+  matrix_rows <- nrow(combined)
+  
+  repeated_df <- apollo[rep(seq_len(nrow(apollo)), each = 240), ] 
+  repeated_df <- repeated_df[, c(2,3,1)]
+  apollo_matrix <- data.matrix(repeated_df)
+  
+  status_matrix <- apollo_matrix - combined_matrix
+  
+  # create a status column
+  status <- as.integer(rowSums(status_matrix == 0) == ncol(status_matrix))
+  status <- as.data.frame(status)
+  
+  # Add status to the combined set
+  combined <- cbind(combined, status)
+  
+  # Extract statistics and add them to the dataframe
+  reciprocity <- statsObject[,,1]
+  indegreeSender <- statsObject[,,2]
+  outdegreeReceiver <- statsObject[,,3]
+  
+  combined$reciprocity <- c(reciprocity)
+  combined$indegreeSender <- c(indegreeSender)
+  combined$outdegreeReceiver <- c(outdegreeReceiver)
+  
+  return(combined)
+}
+```
+
+
+```{r}
+###### TRUE ANALYSIS
+true.reh <- remify(edgelist = apollo, 
+                   model = "tie")
+# calculate stats
+stats <- remstats(tie_effects = effects, 
+                  reh = true.reh)
+# use the function to create the correct format of the dataframe
+true.cox.set <- prepare_coxph_data(stats, apollo)
+# fit cox model 
+true.cox.fit <- coxph(Surv(time, status) ~ reciprocity + indegreeSender + 
+                        outdegreeReceiver, 
+                      data=true.cox.set)
+true <- coefficients(true.cox.fit)
+
+true.cox.fit
+```
+
+
+```{r}
+###### Running the REM on  simulations
+Results1 <- 
+  mbased_finite_apollo[1:5] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+    )
+
+Results1
+```
+
+
+
+#Just testing remaining last years code
+
+```{r}
+Results2 <- 
+  mbased_finite_apollo[6:10] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender +
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+    ) 
+```
+
+
+
+```{r}
+##### Combining Results
+Results <- list(Results1,
+               Results2) %>%
+  purrr::flatten()
+
+Results
+#saving Results
+#save(Results, file = "simulations.RData")
+```
+
+
+```{r}
+##### Adding percentage bias and average width to the Results
+#function for average width and percentage bias.
+AW <- function(df) df[["97.5 %"]] - df[["2.5 %"]]
+PB <- function(df) 100 * abs((df[["estimate"]] - df[["true"]]) / df[["true"]])
+
+
+Results_with_extra <- lapply(Results, function(df) {
+  df$PB <- PB(df)
+  df$AW <- AW(df)
+  df
+})
+
+###### Average sims
+Reduce("+", Results_with_extra) / length(mbased_finite_apollo)
+
+```
+```{r}
+##### Creating a list of all estimates for every statistic
+reciprocity <- Results %>%
+  map(~.x %>% .["reciprocity", ]) %>%
+  do.call("rbind", .)
+
+indegreeSender <- Results %>% 
+  map(~.x %>% .["indegreeSender", ]) %>% 
+        do.call("rbind", .)
+
+outdegreeReceiver <- Results %>% 
+  map(~.x %>% .["outdegreeReceiver", ]) %>% 
+        do.call("rbind", .)
+    
+##### A density plot of all estimates for every statistic
+stats <- list(outdegreeReceiver = outdegreeReceiver,
+              indegreeSender = indegreeSender,
+              reciprocity = reciprocity)
+
+for (stat_name in names(stats)) {
+  plot_data <- stats[[stat_name]]
+  plot <- ggplot(plot_data, aes(x = estimate)) + 
+    geom_density() + 
+    labs(x = paste(stat_name, "estimates"), y = "Density") + 
+    theme_classic()
+  
+  print(plot)
+}
+```
 
