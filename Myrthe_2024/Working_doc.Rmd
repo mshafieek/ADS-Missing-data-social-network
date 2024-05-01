@@ -57,7 +57,7 @@ remify(apollo[indic, ], model = "tie") %>% dim()
 make_missing_MCAR <- function(x, indic){
   sufficient <- x[indic, ]
   miss <- x[-c(indic), ] |>
-    ampute(prop = .33, 
+    ampute(prop = .5, 
            mech = "MCAR", # Data has the same probability of being amputed
            patterns = matrix(c(1,0,1,
                                1,1,0,
@@ -74,7 +74,7 @@ make_missing_MCAR <- function(x, indic){
 make_missing_MAR <- function(x, indic){
   sufficient <- x[indic, ]
   miss <- x[-c(indic), ] |>
-    ampute(prop = .33, 
+    ampute(prop = .5, 
            mech = "MAR", # Information about the missing data is in the observed data
            patterns = matrix(c(1,0,1,
                                1,1,0,
