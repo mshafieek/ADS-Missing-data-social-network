@@ -1,4 +1,11 @@
-
+---
+title: "Working Doc - Thesis"
+author: "Dominic Comerford"
+date: "`r format(Sys.Date(), '%B %d, %Y')`"
+output: 
+  html_document:
+    theme: cosmo
+---
 ```{r, include = FALSE}
 knitr::opts_chunk$set(message = FALSE)
 ```
