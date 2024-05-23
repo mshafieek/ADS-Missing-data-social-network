@@ -6,11 +6,11 @@ output:
   html_document:
     theme: cosmo
 ---
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(message = FALSE)
 ```
-
-
+##Loading Packages and Data
 ```{r, warning = FALSE}
 ##### Load packages
 packages_to_install <- c("purrr", "furrr", "magrittr", "dplyr", 
@@ -24,7 +24,6 @@ for (pkg in packages_to_install) {
     install.packages(pkg)
   }
 }
-
 
 library(purrr, warn.conflicts = FALSE)    # for functional programming
 library(furrr, warn.conflicts = FALSE)    # for functional futures
@@ -52,8 +51,11 @@ devtools::install_github("TilburgNetworkGroup/remstats")
 
 library(mice, warn.conflicts = FALSE)     # for imputation and amputation
 library(remstats, warn.conflicts = FALSE) # for REM statistics
-library(remify, warn.conflicts = FALSE)   # for converting  
+library(remify, warn.conflicts = FALSE)   # for converting
+```
 
+
+```{r, warning = FALSE}
 ##### Load data
 con <- url("https://github.com/mshafieek/ADS-Missing-data-social-network/raw/main/literature_%20REM/Tutorial_REM_REH_DATA/UUsummerschool.Rdata")
 load(con)
@@ -69,16 +71,12 @@ head(apollo)
 tail(apollo)
 summary(apollo)
 str(apollo)
-
 ```
 
 #Descriptive network analysis
 ```{r}
-set.seed(123)
 edges_apollo <- data.frame(from=c(as.character(apollo[,2])),to=c(as.character(apollo[,3])))
 graph_apollo <- graph_from_data_frame(edges_apollo,directed = TRUE)
-plot(graph_apollo)
-summary(graph_apollo)
 
 net <- simplify(graph_apollo, remove.multiple = T) # remove multiple edges for snapshot network analysis
 edge_density(net)
@@ -104,48 +102,47 @@ Figure_1 <- gplot(ApolloNet, jitter = TRUE, pad = .075,
               displayisolates = FALSE, vertex.cex=.6,
               arrowhead.cex = .75, edge.lwd = -.75, edge.col = "gray")
 ```
-# Missingness simulations
+##Sufficient set & Missingness function
 ```{r, include=FALSE}
 set.seed(123) # fix seed to realize a sufficient set
-apollo <- as.tibble(apollo)
+apollo <- as_tibble(apollo)
 indic <- sample(1:nrow(apollo), 1500)
-
-remify(apollo[indic, ], model = "tie") %>% dim()
+remify(apollo[indic, ], model = "tie") %>% dim() # check if 16 nodes
 #### Combine the sufficient set and the incomplete set
-make_missing <- function(x, indic){
+make_missing <- function(x, indic) {
+  x$time_index <- seq_len(nrow(x))
   sufficient <- x[indic, ]
   miss <- x[-c(indic), ] |>
-    # prop is set to .4 to get close to .2 missingness since almost half of the dataset is used for the sufficient set
-    ampute(prop = .4, 
+    ampute(prop = 0.4, 
            mech = "MCAR",
-           patterns = matrix(c(1,1,0, # missing in actor 2
-                               1,0,1, # missing in actor 1
-                               0,1,1, # missing in time
-                               0,0,0, # missing in all
-                               1,0,0, # missing in actor 1 + 2
-                               0,1,0, # missing in time + actor 2
-                               0,0,1  # missing in time + actor 1
+           patterns = matrix(c(1,1,0,1, # missing in actor 2 (4th column is time_index)
+                               1,0,1,1, # missing in actor 1
+                               0,1,1,1, # missing in time
+                               0,0,0,1, # missing in all
+                               1,0,0,1, # missing in actor 1 + 2
+                               0,1,0,1, # missing in time + actor 2
+                               0,0,1,1  # missing in time + actor 1
                                ),
-                             nrow=7,  # change to number of missingness patterns above
+                             nrow=7, 
                              byrow=TRUE)) %>% 
     .$amp
+  
   combined <- rbind(sufficient, miss)
-  return(combined[order(combined$time), ]) # sort it all like apollo
+  combined <- combined[order(combined$time_index), ]
+  combined <- combined[-4] # remove time_index
+  return(combined)
 }
-
+```
+##Multiple imputation specification
+```{r, include=FALSE}
 whichcol <- c("", "actor2", "actor1") # Ensure that actor 1 != actor 2 in imputations
 names(whichcol) <- colnames(apollo)
-
-```
-
-
-```{r, include=FALSE}
 ## predictor matrix
 pred <- make.predictorMatrix(apollo)
 #pred[ ,"time"] <- 0 # using time for imputation creates loops
 ## use the pmm.conditional method
 method <- make.method(apollo)
-method[1] <- "norm" # imputation of time correct? Something Like Last Obs Carried Forward?
+#method[1] <- "norm" # imputation of time correct? Something Like Last Obs Carried Forward?
 method[c(2,3)] <- "pmm.conditional"
 ## post squeeze time between min and max time
 #post <- make.post(apollo)
@@ -154,99 +151,55 @@ method[c(2,3)] <- "pmm.conditional"
 #post["time"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(11849.2, 50014.8))"
 ```
 
-
-## Interpolate time before MICE
+##Interpolate 'time' before MICE
 ```{r}
 set.seed(123)
-mbased_finite_apollo <-
-  furrr::future_map(1:10, ~ {   # start of with 10 simulations for testing
+mbased_finite_apollo_miss <-
+  furrr::future_map(1:100, ~ {   # start of with 10 simulations for testing
     make_missing(apollo, indic) }, .options = furrr_options(seed = 123))
-```
-
-
-```{r}
-# Function to randomly create missingness in 'time' column as does not seem to remove in make_missing. 
-# Also it seems reasonable to remove time in the kept subset. 
-create_miss_time <- function(df) {
-  # Randomly select indices to replace with NA
-  na_indices <- sample(1:nrow(df), size = round(0.2 * nrow(df)))  # Adjust percentage
-  # Replace values at selected indices with NA
-  df$time[na_indices] <- NA
-  return(df)
-}
-
-# Iterate over the tibbles in mbased_finite_apollo
-for (i in 1:length(mbased_finite_apollo)) {
-  # Randomly create missingness in the 'time' column
-  mbased_finite_apollo[[i]] <- create_miss_time(mbased_finite_apollo[[i]])
-}
+md.pattern(mbased_finite_apollo_miss[[1]], rotate.names = TRUE)
 
 ```
-
 ##Impute time with interpolation (single imputation)
 ```{r}
-for (i in 1:length(mbased_finite_apollo)) {
+for (i in 1:length(mbased_finite_apollo_miss)) {
   # Impute missing values in the 'time' column using na_interpolation
-  mbased_finite_apollo[[i]]$time <- na_interpolation(mbased_finite_apollo[[i]]$time)
+  mbased_finite_apollo_miss[[i]]$time <- na_interpolation(mbased_finite_apollo_miss[[i]]$time)
 }
-```
-
-```{r}
-# # Iterate over each tibble in mbased_finite_apollo
-# for (i in seq_along(mbased_finite_apollo)) {
-#   # Extract the current tibble
-#   current_tibble <- mbased_finite_apollo[[i]]
-#   
-#   # Iterate over the 'time' column
-#   for (j in 1:nrow(current_tibble)) {
-#     # If 'time' value is NA
-#     if (is.na(current_tibble$time[j])) {
-#       # Find the closest earlier and later observed times
-#       earlier_time <- ifelse(sum(!is.na(current_tibble$time[1:(j-1)])) > 0,
-#                              max(current_tibble$time[1:(j-1)], na.rm = TRUE),
-#                              NA)
-#       later_time <- ifelse(sum(!is.na(current_tibble$time[(j+1):nrow(current_tibble)])) > 0,
-#                            min(current_tibble$time[(j+1):nrow(current_tibble)], na.rm = TRUE),
-#                            NA)
-#       
-#       # Interpolate between the closest earlier and later observed times
-#       current_tibble$time[j] <- mean(c(earlier_time, later_time), na.rm = TRUE)
-#     }
-#   }
-#   
-#   # Check if 'time' column remains ordered from early to later
-#   if (!identical(current_tibble$time, sort(current_tibble$time))) {
-#     warning("Time column is not ordered after interpolation.")
-#   }
-#   
-#   # Update the modified tibble back into the list
-#   mbased_finite_apollo[[i]] <- current_tibble
-# }
-# 
 ```
 
 ##Impute sender and receiver through MICE
 ```{r}
 ##### Model-based finite populations
-# Function for a single tibble
-apply_mice_to_tibble <- function(tibble) {
-  # Apply mice to the tibble
-  imp <- mice(tibble,
-                       m = 5,
-                       maxit = 5,
-                       method = method,
-                       whichcolumn = whichcol,
-                       predictorMatrix = pred,
-                       print = FALSE)
-  # Return the imputed tibble
-  return(imp)
-}
-# Apply mice to each tibble in mbased_finite_apollo
-mbased_finite_apollo <- lapply(mbased_finite_apollo, apply_mice_to_tibble)
+# # Function for a single tibble
+# apply_mice_to_tibble <- function(tibble) {
+#   # Apply mice to the tibble
+#   imp <- mice(as.data.frame(tibble),
+#                        m = 5,
+#                        maxit = 5,
+#                        method = method,
+#                        whichcolumn = whichcol,
+#                        predictorMatrix = pred,
+#                        print = FALSE)
+#   # Return the imputed tibble
+#   return(imp)
+# }
+# # Apply mice to each tibble in mbased_finite_apollo
+# set.seed(123)
+# mbased_finite_apollo <- lapply(mbased_finite_apollo_miss, apply_mice_to_tibble) # possible future_map()
 
+mbased_finite_apollo <- 
+  furrr::future_map(1:100, ~ {
+  #data_frame <- as.data.frame(mbased_finite_apollo_miss[[.x]])
+  mice(mbased_finite_apollo_miss[[.x]],
+       m = 5, 
+       maxit = 5,
+       method = method,
+       whichcolumn = whichcol,
+       predictorMatrix = pred,
+       print = FALSE)
+}, .options = furrr_options(seed = 123))
 ```
-
-
 
 ```{r, echo=FALSE}
 # ##### Missing data pattern of all simulations.
@@ -262,16 +215,13 @@ mbased_finite_apollo <- lapply(mbased_finite_apollo, apply_mice_to_tibble)
 # 
 # test <- complete(mbased_finite_apollo[[5]], action = 3, include = TRUE)
 # test <- mbased_finite_apollo[[5]]
+# 
+# plot(mbased_finite_apollo[[5]])
+# stripplot(mbased_finite_apollo[[5]])
 
 ```
 
-
-```{r}
-plot(mbased_finite_apollo[[5]])
-stripplot(mbased_finite_apollo[[5]])
-```
-
-
+##Defining REM effects and preparing data for Cox function
 ```{r, echo=FALSE}
 ##### Defining effects for the relational event model
 effects <- ~ -1 + reciprocity(scaling = ("std")) + indegreeSender() + outdegreeReceiver()
@@ -285,9 +235,7 @@ stats_function <- function(data) {
   # Return the statistics
   return(statsObject_imp)
 }
-
 ```
-
 
 
 ```{r}
@@ -336,7 +284,7 @@ prepare_coxph_data <- function(statsObject, apollo) {
 }
 ```
 
-
+##Fully observed data
 ```{r}
 ###### TRUE ANALYSIS
 true.reh <- remify(edgelist = apollo, 
@@ -355,11 +303,11 @@ true <- coefficients(true.cox.fit)
 true.cox.fit
 ```
 
-
+##Analysis on time (interpolated), actor 1 + 2 MI
 ```{r}
 ###### Running the REM on  simulations
 Results1 <- 
-  mbased_finite_apollo[1:2] %>% 
+  mbased_finite_apollo[1:10] %>% 
   map(~.x %>% # for every simulation
         complete("all") %>% 
         map(~.x %>% # for every imputation
@@ -392,9 +340,6 @@ Results1
 ```
 
 
-
-#Just testing remaining last years code
-
 ```{r}
 Results2 <- 
   mbased_finite_apollo[11:20] %>% 
@@ -424,23 +369,296 @@ Results2 <-
           select(term, m, true, estimate, std.error, statistic, p.value, 
                  riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
           column_to_rownames("term") # `term` as rownames
-    ) 
+    )
 ```
 
+```{r}
+Results3 <- 
+  mbased_finite_apollo[21:30] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
+```
 
 
 ```{r}
-##### Combining Results
-Results <- list(Results1,
-               Results2) %>%
-  purrr::flatten()
-
-Results
-#saving Results
-#save(Results, file = "simulations.RData")
+Results4 <- 
+  mbased_finite_apollo[31:40] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
 ```
 
 
+```{r}
+Results5 <- 
+  mbased_finite_apollo[41:50] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
+```
+
+
+```{r}
+Results6 <- 
+  mbased_finite_apollo[51:60] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
+```
+
+
+```{r}
+Results7 <- 
+  mbased_finite_apollo[61:70] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
+```
+
+
+```{r}
+Results8 <- 
+  mbased_finite_apollo[71:80] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
+```
+
+
+```{r}
+Results9 <- 
+  mbased_finite_apollo[81:90] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
+```
+
+
+```{r}
+Results10 <- 
+  mbased_finite_apollo[91:100] %>% 
+  map(~.x %>% # for every simulation
+        complete("all") %>% 
+        map(~.x %>% # for every imputation
+              stats_function() %>% # do stats function
+              prepare_coxph_data(apollo = apollo) %$% # prepare cox ph
+              coxph(Surv(time, status) ~ 
+                      reciprocity + 
+                      indegreeSender + 
+                      outdegreeReceiver)) %>%
+        pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
+        .$pooled %>% # extract table of pooled coefficients
+          mutate(true = true, # add true
+                 df = m-1,  # correct df
+                 riv = Inf, # correct riv
+                 std.error = sqrt(t), # standard error
+                 statistic = estimate / std.error, # test statistic
+                 p.value = 2 * (pt(abs(statistic), 
+                                   pmax(df, 0.001), 
+                                   lower.tail = FALSE)), # correct p.value
+                 `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+                 `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+                 cov = `2.5 %` < true & true < `97.5 %`, # coverage
+                 bias = estimate - true) %>% # bias
+          select(term, m, true, estimate, std.error, statistic, p.value, 
+                 riv, `2.5 %`, `97.5 %`, cov, bias) %>% 
+          column_to_rownames("term") # `term` as rownames
+  )
+```
+
+##Combining Results
+```{r}
+##### Combining Results
+Results <- list(Results1,
+               Results2,
+               Results3,
+               Results4,
+               Results5,
+               Results6,
+               Results7,
+               Results8,
+               Results9,
+               Results10) %>%
+  purrr::flatten()
+```
+
+
+##Save results
+```{r}
+#saving Results
+save(Results, file = "TimeINT_A12_MI.RData")
+```
+
+##Percentage bias and average width
 ```{r}
 ##### Adding percentage bias and average width to the Results
 #function for average width and percentage bias.
@@ -486,9 +704,8 @@ for (stat_name in names(stats)) {
   
   print(plot)
 }
-reprex()
+
 ```
 
 
-reprex()
 
