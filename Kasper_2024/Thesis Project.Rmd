@@ -1,0 +1,562 @@
+---
+title: "Thesis Project"
+author: "Kasper Hermanns"
+date: "2024-05-10"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading packages
+
+Here we load all the packages. 
+
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
+
+# The needed packages, constantly updated
+packages <- c("mice","purrr","furrr","dplyr","tibble","remify","remstats","relevent","sna","magrittr","survival","imputeTS","survival","tibble")
+
+# library("devtools")
+# devtools::install_github("TilburgNetworkGroup/remify")
+# devtools::install_github("gerkovink/mice@match_conditional_current") 
+# devtools::install_github("TilburgNetworkGroup/remstats")
+
+lapply(packages, library,  warn.conflicts = FALSE, character.only=TRUE) # load all the packages
+
+
+```
+
+## Load in the data
+
+Remove the irrelevant data and rename the 'PartOfApollo_13' data
+
+```{r echo=TRUE, , echo=FALSE}
+
+rm(list=ls())
+
+# set working directory to be the current directory
+setwd("~/Applied Data Science (Master)/Thesis 2024/Code")
+
+
+# Load the data, rename Apollo data and remove the rest of the data
+load("UUsummerschool.Rdata")
+Apollo <- PartOfApollo_13  %>% 
+  rename(
+    actor1 = sender,        # These are renamed actor1 and actor2 to match the naming from the 'remify' function used later
+    actor2 = receiver
+  ) 
+
+rm(Class, PartOfApollo_13, Twitter_data_rem3, WTCPoliceCalls, ClassIntercept, 
+   ClassIsFemale, ClassIsTeacher, WTCPoliceIsICR)
+
+head(Apollo)
+tail(Apollo)
+summary(Apollo)
+str(Apollo)
+
+N <- nrow(Apollo)
+
+# Add order column to Apollo, helps sorting later since the time column needs to be in order
+Apollo$order <- 1:nrow(Apollo)
+
+# Set this as the seed to get the same results every time
+set.seed(123)
+
+```
+
+
+## Visualize Network
+
+With this full data, show the network and its connections
+
+
+```{r echo=TRUE, , echo=FALSE}
+
+# Make sociomatrix from the Dyadic 
+ApolloNet <- as.sociomatrix.eventlist(Apollo,19)
+
+# Make covariate denoting which actors are astronauts or not (last 3 are astronauts)
+IsAstronaut <- vector("logical",19)
+IsAstronaut[17:19] <- TRUE
+IsAstronaut
+
+# And plot it using gplot
+gplot(ApolloNet, jitter = TRUE, pad = .075,
+              mode = "target", ,vertex.col=ifelse(IsAstronaut ,"blue","red"),
+              displaylabels = TRUE, label.pos = 0, label.cex = .75,
+              boxed.labels = TRUE, label.pad = .5, 
+              displayisolates = FALSE, vertex.cex=.6,
+              arrowhead.cex = .75, edge.lwd = -.75, edge.col = "gray") 
+
+```
+
+
+## Analyse the full dataset to get the true coefficients
+
+Now that there is no missingness (yet), run the analysis to get the true values for the appropriate statistics:
+  1. Reciprocity              (PSAB-BA)
+  2. Indegree sender          (NIDSnd) 
+  3. Outdegree receiver       (NODRec)
+  
+These are the endogenous statistics used for analysis last year, will be changed and updated.
+
+
+```{r echo=TRUE}
+
+## This function creates a riskset for the given network with calculated statistics according to the given formula. A riskset is a set of all events (dyads) that #have or could have occurred at each timepoint. It should have M (dyads) * N (timepoints) rows and            columns: {time,actor1,actor2,status} + 1 column for each calculated endogenous or exogenous statistic.
+riskset_function <- function(network,formula){
+  
+  # Remove the order column from the network, otherwise it will interfere with the REM
+  network <- network %>% select(-order)
+  
+  # Get the Relational Event History from the network
+  REH <- remify(network,  model = 'tie')
+  
+  # Calculate stats from this REH for each dyad at every timepoint
+  dyad_stats <- remstats(REH, tie_effects = formula)
+  
+  # Get all the dyads from the network and give them corresponding id's
+  network_dyads <- attr(dyad_stats, "riskset")  %>% rename(actor1 = sender, actor2 = receiver) 
+  
+  # Add those id's to the Apollo network to denote which dyad is present
+  Apollo_dyads <- merge(network,network_dyads) %>% rename(dyad = id)
+  
+  # Now we are making our full riskset, this is done by merging the network with the dataframe containing all dyads
+  # The results is a dataframe with all dyads at every timepoint, resulting in 240 (dyads) * 3882 (timepoints) = 931680 rows
+  riskset <- merge(Apollo_dyads %>% select(time,dyad),network_dyads, by = NULL) %>% arrange(time)
+  
+  # To this we add the stats calculated for each dyad at every timepoint by remstats.
+  riskset$reciprocity <- c(dyad_stats[,,1])
+  riskset$indegreeSender <- c(dyad_stats[,,2])
+  riskset$outdegreeReceiver <- c(dyad_stats[,,3])
+  
+  # To finish the riskset, a status variable is created. It denotes which dyad was actually present (1 if so, 0 otherwise) at each timepoint
+  riskset <- riskset %>% mutate(id = as.integer(id==dyad)) %>% 
+                                    rename(status = id) %>% select(-dyad)
+  
+  return(riskset)
+}
+
+# These will be the statistics that will be studied 
+statistics <- ~ -1 + reciprocity(scaling = ("std")) + indegreeSender() + outdegreeReceiver()
+
+# Create a riskset for the true/full Apollo network using the statistics formula created above
+true_riskset <- riskset_function(Apollo,statistics)
+
+# Fit a Cox Proportional Hazards model on this riskset to get the estimates for the statistics of the true network
+true.fit <- coxph(Surv(time,status) ~ reciprocity + 
+                                      indegreeSender +  
+                                      outdegreeReceiver, 
+            data=true_riskset)
+summary(true.fit)
+
+# Get the true coefficients for the statistics, these are compared to the coefficients from the amputed datasets to evaluate the imputations
+true.coefs <- coefficients(true.fit)
+true.coefs
+
+
+```
+
+
+## Prepare data for amputing
+
+ <font size="0.1"> am puting these ***** in your ***** </font>
+
+```{r echo=TRUE}
+
+set.seed(123)
+
+# Check how many unique dyads and actors are in the original dataset
+remify(Apollo, model = "tie") %>% dim() # 16 actors and 240 dyads
+
+# Need to make sure that the amputed datasets retain those 16 actors and 240 dyads, otherwise they can't be imputed
+# For that we need a random base set of (e.g. 1300) rows that we always keep
+M <- 1300
+base_indic <- sort(sample(1:nrow(Apollo),M))  
+
+# Test if those still retain all the actors and dyads
+remify(Apollo[(base_indic),],model = "tie") %>% dim()
+# Success! These indices still have all 16 actors and 240 dyads. These can be used as the base set.
+
+# Split the dataset in 2. rest_Apollo can be amputed in whatever way and then combined with base_Apollo and arranged correctly.
+base_Apollo <- Apollo[base_indic,]
+rest_Apollo <- Apollo[-base_indic,]
+
+comb_Apollo <- rbind(base_Apollo,rest_Apollo) %>%  arrange(order)
+
+
+```
+
+## Props for the Heist Rocker
+
+This is the function to fix the proportion issue that arose from only running ampute on a part of the dataset
+
+```{r echo=TRUE}
+
+# Lets try out amputing with default settings, just to see what happens. Of course we only ampute rest_Apollo and then combine
+MCAR.1 <- ampute(rest_Apollo,prop = .3, mech = "MCAR")$amp
+md.pattern(MCAR.1)
+
+Apollo_miss1 <- rbind(base_Apollo,MCAR.1) %>%  arrange(order)
+md.pattern(Apollo_miss1)
+
+# Lets check if the proportion is correct. (Spoiler: Its not)
+sum(!complete.cases(Apollo_miss1)) / N
+# Wait this is not the proportion we want! Darn it
+
+## Problem!:
+# Since the amputing is done on just a part of the dataset, the missingness proportion will not be accurate to the prop value given to the ampute function. This has to be fixed like this:
+
+recalc_prop <- function (desired_prop, totalN, partN){
+  rowsMissing <-  totalN * desired_prop # This is the amount of rows that should be missing in the full dataset
+  needed_prop <- rowsMissing / partN  # This is the prop missing needed in the partial dataset to recreate the correct prop level
+  return(needed_prop)
+}
+
+# Now we try this again with the recalculated prop
+MCAR.1 <- ampute(rest_Apollo,prop = recalc_prop(0.3,N,N-M), mech = "MCAR")$amp
+md.pattern(MCAR.1)
+
+comb_Apollo <- rbind(base_Apollo,MCAR.1) %>%  arrange(order)
+md.pattern(comb_Apollo)
+
+sum(!complete.cases(comb_Apollo)) / N
+# This is better!
+
+```
+
+
+## Amputer? I hardly know her!
+
+Here we start amputing the rest_Apollo in a couple different ways. The settings will be:
+
+- Missingness proportion (rows with missing values) will be 0.3
+- We will have all possible combinations of time, actor1 and actor2 as patterns
+- The frequency of each pattern will differ
+- The mechanism will be MAR.
+- Weights will be standard
+- Type will differ between pattern, mostly RIGHT-tailed though.
+
+```{r echo=TRUE}
+
+# These are the missingness patterns, the indices column will never be missing of course
+myPatterns <- matrix(c(0,0,0,1,
+                     0,0,1,1,
+                     0,1,0,1,
+                     1,0,0,1,
+                     1,1,0,1,
+                     1,0,1,1,
+                     0,1,1,1),
+                   nrow = 7,ncol=4,byrow = T)
+
+ampute_dataset <- function(des_prop, patts, mechs, freqs = NULL, weights = NULL, types = NULL){
+  
+  prop <- recalc_prop(des_prop,N,N-M)
+  amp_rest <- ampute(rest_Apollo,prop = prop, patterns = patts, mech = mechs, freq = freqs, weights = weights, type = types)$amp
+  amputed_nw <- rbind(base_Apollo,amp_rest) %>%  arrange(order)
+  
+  return(amputed_nw)
+  
+}
+
+MCAR.1 <- ampute_dataset(0.3,myPatterns,"MCAR")
+md.pattern(MCAR.1)
+
+# Test out the function with different frequencies for the missingness patterns
+MCAR.1_5 <- ampute_dataset(0.3,myPatterns,"MCAR",freqs = c(0.1,0.1,0.1,0.1,0.2,0.2,0.2))
+
+md.pattern(MCAR.1_5[1:3])
+
+```
+
+## Mice Mice Baby 
+
+Now we will use multiple imputation with mice to impute those missing values we created above. 
+
+
+The method will be pmm_conditional, which makes sure that actor1 and actor2 can't be the same id.
+Imputing the missing time values will be more complicated, since the correct order needs to be maintained
+
+For now we just interpolate the NA's in time before running MICE. 
+
+```{r echo=TRUE}
+
+# Set these as the methods, time will not have a method as it will be interpolated before running MICE so will have no NA
+myMethods1 <- c("","pmm.conditional","pmm.conditional","") 
+
+cond_col <- c("","actor2","actor1","") # Need to specify on which columns each pmm.conditional is conditioned on.
+names(cond_col) <- colnames(Apollo)
+
+
+## Interpolate time before running MICE, this is done by taking the average timepoint(s) between the timepoints before and after the NA(s)
+Apollo_time_full <- MCAR.1 %>% mutate(time = na_interpolation(MCAR.1$time))
+is.unsorted(Apollo_time_full$time)
+md.pattern(Apollo_time_full)
+# as you can see it is sorted and no longer any missing values for time.
+
+# Now we set the predictor matrix correctly etc.
+imp0 <- mice(Apollo_time_full,printFlag = F)
+
+predMat1 <- imp0$predictorMatrix
+predMat1
+predMat1[,'order'] <- 0          # Order should not help predict actor1 and actor2
+predMat1['time',] <- predMat1['order',] <- 0  # Other variables don't predict order (Superfluous, since it will not be imputed anyway but looks nicer)
+predMat1
+
+# And we run MICE
+imp1 <- mice(Apollo_time_full, m = 1, method = myMethods1, predictorMatrix = predMat1, whichcolumn = cond_col ,printFlag = F)
+
+Apollo_amp1 <- complete(imp1)
+is.unsorted(Apollo_amp1$time)
+is.unsorted(Apollo_amp1$order)
+
+
+
+
+```
+
+
+## Amputing and imputing 100 datasets
+
+
+```{r echo=TRUE}
+
+# Use future_map to run the code to ampute and then impute the dataset 100 times 
+MCAR_Apollo <- future_map(1:100, ~ {
+  ampute_dataset(0.3,myPatterns,"MCAR") %>%
+    mutate(., time = na_interpolation(MCAR.1$time)) %>% # Interpolate time before running MICE, iwll be changed later
+    mice(m = 5, maxit = 5,         # 5 imputations per amputed df
+         method = myMethods1,      # This one does not impute time using MICE, been done above
+         predictorMatrix = predMat1, 
+         whichcolumn = cond_col,
+         printFlag = F)
+}, .options = furrr_options(seed = 123))
+
+md.pattern(complete(MCAR_Apollo[[1]]))
+
+## Here we check whether convergence occurred during the multiple imputation of the amputed datasets
+convergence <- lapply(MCAR_Apollo, plot)
+
+# Plot one of the convergence plots, chosen randomly. Done this multiple times to check convergence by eye
+i <- sample(1:100,1)
+convergence[[i]] # Seems like most converged relatively well.
+
+```
+
+
+## Analysis on MICE datasets
+
+
+
+
+```{r echo=TRUE}
+
+## test 5 first, with future maps. Print computation time: 1.4 min
+start_time <- Sys.time()
+
+imputed_cox_sets <-  future_map(MCAR_Apollo[1:100], ~ {
+  complete(.x,"all") %>% 
+    future_map(~.x %>%
+      riskset_function(.,statistics) %$%
+        coxph(Surv(time,status) ~ reciprocity + 
+                                      indegreeSender +  
+                                      outdegreeReceiver)
+      )  %>%
+    pool(custom.t = ".data$b + .data$b / .data$m") %>%
+  .$pooled %>% # extract table of pooled coefficients
+        mutate(true = true.coefs, # add true
+               df = m-1, # correct df
+               riv = Inf, # correct riv
+               std.error = sqrt(t), # standard error
+               statistic = estimate / std.error, # test statistic
+               p.value = 2 * (pt(abs(statistic),
+                                 pmax(df, 0.001),
+                                 lower.tail = FALSE)), # correct p.value
+               `2.5 %` = estimate - qt(.975, df) * std.error, # lower bound CI
+               `97.5 %` = estimate + qt(.975, df) * std.error, # upper bound CI
+               cov = `2.5 %` < true & true < `97.5 %`, # coverage
+               bias = estimate - true) %>% # bias
+        select(term, m, true, estimate, std.error, statistic, p.value,
+               riv, `2.5 %`, `97.5 %`, cov, bias) %>%
+        column_to_rownames("term") # create the sets for cox model
+
+})
+
+end_time <- Sys.time()
+print(end_time - start_time) 
+
+Reduce("+", imputed_cox_sets) / length(MCAR_Apollo)
+
+# Long data frame
+reciprocity <- imputed_cox_sets %>%
+  map(~.x %>% .["reciprocity", ]) %>% #select row reciprocity
+  do.call("rbind", .)
+indegreeSender <- imputed_cox_sets %>%
+  map(~.x %>% .["indegreeSender", ]) %>%
+  do.call("rbind", .)
+outdegreeReceiver <- imputed_cox_sets %>%
+  map(~.x %>% .["outdegreeReceiver", ]) %>%
+  do.call("rbind", .)
+
+colMeans(reciprocity)
+# Plot
+library(ggplot2)
+reciprocity %>%
+  ggplot(aes(x = estimate)) +
+  geom_density() + theme_classic() + labs(x ="Reciprocity Estimate", y = "Density")
+outdegreeReceiver %>%
+  ggplot(aes(x = estimate)) +
+  geom_density() + theme_classic() + labs(x ="Outdegree Receiver Estimate", y = "Density")
+indegreeSender %>%
+  ggplot(aes(x = estimate)) +
+  geom_density() + theme_classic() + labs(x ="Indegree Sender Estimate", y = "Density")
+
+# calculate percent bias
+av.resiprociy <- colMeans(reciprocity)
+av.indegreeSender <- colMeans(indegreeSender)
+av.outdefgreeReceiver <- colMeans(outdegreeReceiver)
+PB.recip <- 100 * abs((av.resiprociy["estimate"] - true['reciprocity'])/ true['reciprocity'])
+PB.indegSender <- 100 * abs((av.indegreeSender["estimate"] - true['indegreeSender'])/
+                              true['indegreeSender'])
+PB.outdegReciever <- 100 * abs((av.outdefgreeReceiver["estimate"] -
+                                  true['outdegreeReceiver'])/ true['outdegreeReceiver'])
+# calculate average width
+AW.recip <- av.resiprociy["97.5 %"] - av.resiprociy["2.5 %"]
+AW.indegSend <- av.indegreeSender["97.5 %"] - av.indegreeSender["2.5 %"]
+AW.outdegRecip <- av.outdefgreeReceiver["97.5 %"] - av.outdefgreeReceiver["2.5 %"]
+
+# look at the distribution more closely
+ggqqplot(reciprocity$estimate, ylab = "Reciprocity Estimates")
+ks.test(reciprocity$estimate, "pnorm")
+ggqqplot(indegreeSender$estimate, ylab = "Indegree Sender Estimates")
+ks.test(indegreeSender$estimate, "pnorm")
+ggqqplot(outdegreeReceiver$estimate, ylab = "Outdegree Receiver Estimates")
+ks.test(outdegreeReceiver$estimate, "pnorm")
+
+
+```
+
+
+## Mice 2 meet you!
+
+Here we try some other methods in MICE to get good imputations for time.
+
+```{r echo=TRUE}
+
+# Set these as the methods, time will be predicted with norm.predict
+myMethods2 <- c("norm.predict","pmm.conditional","pmm.conditional","") 
+
+imp0_2 <- mice(MCAR.1,printFlag = F)
+
+predMat2 <- imp0_2$predictorMatrix
+predMat2
+predMat2[,'order'] <- 0          # Order should not help predict actor1 and actor2
+predMat2['time',] <- c(0,0,0,1)  # Lets try regressing time just on the order variable, this should keep the correct order intact.
+predMat2['order',] <- 0          # Other variables don't predict order (Superfluous, since it will not be imputed anyway but looks nicer)
+predMat2
+
+imp1_2 <- mice(MCAR.1, m = 1, method = myMethods2, predictorMatrix = predMat2, whichcolumn = cond_col ,printFlag = F)
+
+test_2 <- complete(imp1_2)
+is.unsorted(test_2$time)
+
+### IS UNSORTED, SO IT DOES NOT KEEP THE ORDER INTACT CORRECTLY. LOOK INTO FIX.
+
+test_2 <- test_2 %>% arrange(time)
+### SEE order: (101,102,111)
+
+### TRY SETTING THE TIMEPOINT OF 1 TO 0 AS BASELINE AND TRY AGAIN (SUBTRACT TIME AT 1 OF EVERY TIMEPOINT)
+
+baseline_time <- Apollo[1,1]
+baseline_time
+
+test_miss1 <- MCAR.1 %>% mutate(time = time - baseline_time)
+md.pattern(test_miss1)
+head(test_miss1)
+
+imp1_2 <- mice(MCAR.1, m = 1, method = myMethods2, predictorMatrix = predMat2, whichcolumn = cond_col ,printFlag = F)
+
+test_2 <- complete(imp1_2)
+is.unsorted(test_2$time)
+
+test_2 <- test_2 %>% arrange(time)
+
+### STILL DIDNT WORK, TRY SETTING ORDER TO NUMERIC
+
+test_miss1$order <- as.numeric(test_miss1$order)
+str(test_miss1)
+
+imp_test <- mice(test_miss1, m = 1, method = myMethods1, predictorMatrix = predMat2, whichcolumn = cond_col ,printFlag = F)
+test <- complete(imp_test)
+is.unsorted(test$time)
+
+test2 <- test %>% arrange(time)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
