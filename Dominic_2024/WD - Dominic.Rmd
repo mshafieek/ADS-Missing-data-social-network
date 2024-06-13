@@ -120,8 +120,6 @@ set.seed(123)
 mbased_finite_apollo_miss <-
   furrr::future_map(1:100, ~ {   # Create 100 simulated datasets with missingness
     make_missing(apollo, indic) }, .options = furrr_options(seed = 123))
-mbased_finite_apollo_miss_cc <- mbased_finite_apollo_miss # for later complete case analysis before time gets imputed
-
 
 # All simulations combined
 missing_pattern <- mbased_finite_apollo_miss %>%
