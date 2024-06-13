@@ -7,11 +7,13 @@ output:
     theme: cosmo
 ---
 
+
 ```{r, include = FALSE}
 knitr::opts_chunk$set(message = FALSE)
 ```
+
 ##Loading Packages and Data
-```{r, warning = FALSE}
+```{r, warning = FALSE, echo=FALSE}
 ##### Load packages
 packages_to_install <- c("purrr", "furrr", "magrittr", "dplyr", 
                          "tibble", "data.table", "survival", "tidyverse", 
@@ -59,7 +61,7 @@ library(remify, warn.conflicts = FALSE)   # for converting
 ##### Load data
 con <- url("https://github.com/mshafieek/ADS-Missing-data-social-network/raw/main/literature_%20REM/Tutorial_REM_REH_DATA/UUsummerschool.Rdata")
 load(con)
-apollo <- PartOfApollo_13 %>% 
+apollo <- PartOfApollo_13 %>%
   rename(
     actor1 = sender,
     actor2 = receiver
@@ -67,45 +69,23 @@ apollo <- PartOfApollo_13 %>%
 rm(Class, PartOfApollo_13, Twitter_data_rem3, WTCPoliceCalls, ClassIntercept, 
    ClassIsFemale, ClassIsTeacher, WTCPoliceIsICR, con, pkg)
 
+## Same location dummy
+apollo$s_ast <- ifelse(apollo$actor1 > 16, 1, 0)
+apollo$r_ast <- ifelse(apollo$actor2 > 16, 1, 0)
+apollo$same_location <- ifelse(apollo$s_ast == apollo$r_ast, 1, 0)
+apollo$s_ast <- NULL
+apollo$r_ast <- NULL
+
 head(apollo)
 tail(apollo)
 summary(apollo)
 str(apollo)
 ```
 
-#Descriptive network analysis
-```{r}
-edges_apollo <- data.frame(from=c(as.character(apollo[,2])),to=c(as.character(apollo[,3])))
-graph_apollo <- graph_from_data_frame(edges_apollo,directed = TRUE)
-
-net <- simplify(graph_apollo, remove.multiple = T) # remove multiple edges for snapshot network analysis
-edge_density(net)
-
-centr_clo(net, mode="all", normalized=T)$centralization
-centr_betw(net, directed=T, normalized=T)$centralization
-centr_eigen(net, directed=T, normalized=T)$centralization
-transitivity(net, type="global")
-
-diameter(net, directed=T)
-mean_distance(net, directed=T)
-
-```
-
-
-```{r}
-set.seed(0)
-ApolloNet <- as.sociomatrix.eventlist(apollo, 19)
-Figure_1 <- gplot(ApolloNet, jitter = TRUE, pad = .075,
-              mode = "target",
-              displaylabels = TRUE, label.pos = 0, label.cex = .75,
-              boxed.labels = TRUE, label.pad = .5, 
-              displayisolates = FALSE, vertex.cex=.6,
-              arrowhead.cex = .75, edge.lwd = -.75, edge.col = "gray")
-```
 ##Sufficient set & Missingness function
 ```{r, include=FALSE}
 set.seed(123) # fix seed to realize a sufficient set
-apollo <- as_tibble(apollo)
+apollo <- apollo |> as_tibble()
 indic <- sample(1:nrow(apollo), 1500)
 remify(apollo[indic, ], model = "tie") %>% dim() # check if 16 nodes
 #### Combine the sufficient set and the incomplete set
@@ -114,14 +94,14 @@ make_missing <- function(x, indic) {
   sufficient <- x[indic, ]
   miss <- x[-c(indic), ] |>
     ampute(prop = 0.4, 
-           mech = "MCAR",
-           patterns = matrix(c(1,1,0,1, # missing in actor 2 (4th column is time_index)
-                               1,0,1,1, # missing in actor 1
-                               0,1,1,1, # missing in time
-                               0,0,0,1, # missing in all
-                               1,0,0,1, # missing in actor 1 + 2
-                               0,1,0,1, # missing in time + actor 2
-                               0,0,1,1  # missing in time + actor 1
+           mech = "MCAR", # (4th column is same location, 5th column is time_index)
+           patterns = matrix(c(1,1,0,1,1, # missing in actor 2 
+                               1,0,1,1,1, # missing in actor 1
+                               0,1,1,1,1, # missing in time
+                               0,0,0,1,1, # missing in all
+                               1,0,0,1,1, # missing in actor 1 + 2
+                               0,1,0,1,1, # missing in time + actor 2
+                               0,0,1,1,1  # missing in time + actor 1
                                ),
                              nrow=7, 
                              byrow=TRUE)) %>% 
@@ -129,36 +109,25 @@ make_missing <- function(x, indic) {
   
   combined <- rbind(sufficient, miss)
   combined <- combined[order(combined$time_index), ]
-  combined <- combined[-4] # remove time_index
+  combined <- combined[-5] # remove time_index
   return(combined)
 }
-```
-##Multiple imputation specification
-```{r, include=FALSE}
-whichcol <- c("", "actor2", "actor1") # Ensure that actor 1 != actor 2 in imputations
-names(whichcol) <- colnames(apollo)
-## predictor matrix
-pred <- make.predictorMatrix(apollo)
-#pred[ ,"time"] <- 0 # using time for imputation creates loops
-## use the pmm.conditional method
-method <- make.method(apollo)
-#method[1] <- "norm" # imputation of time correct? Something Like Last Obs Carried Forward?
-method[c(2,3)] <- "pmm.conditional"
-## post squeeze time between min and max time
-#post <- make.post(apollo)
-#min(apollo$time)
-#max(apollo$time)
-#post["time"] <- "imp[[j]][, i] <- squeeze(imp[[j]][, i], c(11849.2, 50014.8))"
 ```
 
 ##Interpolate 'time' before MICE
 ```{r}
 set.seed(123)
 mbased_finite_apollo_miss <-
-  furrr::future_map(1:100, ~ {   # start of with 10 simulations for testing
+  furrr::future_map(1:100, ~ {   # Create 100 simulated datasets with missingness
     make_missing(apollo, indic) }, .options = furrr_options(seed = 123))
-md.pattern(mbased_finite_apollo_miss[[1]], rotate.names = TRUE)
+mbased_finite_apollo_miss_cc <- mbased_finite_apollo_miss # for later complete case analysis before time gets imputed
 
+
+# All simulations combined
+missing_pattern <- mbased_finite_apollo_miss %>%
+  map(~.x) %>%
+  do.call("rbind", .) %>%
+  md.pattern(rotate.names = TRUE)
 ```
 ##Impute time with interpolation (single imputation)
 ```{r}
@@ -170,27 +139,19 @@ for (i in 1:length(mbased_finite_apollo_miss)) {
 
 ##Impute sender and receiver through MICE
 ```{r}
-##### Model-based finite populations
-# # Function for a single tibble
-# apply_mice_to_tibble <- function(tibble) {
-#   # Apply mice to the tibble
-#   imp <- mice(as.data.frame(tibble),
-#                        m = 5,
-#                        maxit = 5,
-#                        method = method,
-#                        whichcolumn = whichcol,
-#                        predictorMatrix = pred,
-#                        print = FALSE)
-#   # Return the imputed tibble
-#   return(imp)
-# }
-# # Apply mice to each tibble in mbased_finite_apollo
-# set.seed(123)
-# mbased_finite_apollo <- lapply(mbased_finite_apollo_miss, apply_mice_to_tibble) # possible future_map()
+##Multiple imputation specification
+whichcol <- c("", "actor2", "actor1", "") # Ensure that actor 1 != actor 2 in imputations
+names(whichcol) <- colnames(apollo)
+## predictor matrix
+pred <- make.predictorMatrix(apollo)
+pred[c("actor1", "actor2"), "same_location"] <- 0 # exclude same location as predictor of actor 1 + 2
+
+## use the pmm.conditional method
+method <- make.method(apollo)
+method[c(2,3)] <- "pmm.conditional"
 
 mbased_finite_apollo <- 
   furrr::future_map(1:100, ~ {
-  #data_frame <- as.data.frame(mbased_finite_apollo_miss[[.x]])
   mice(mbased_finite_apollo_miss[[.x]],
        m = 5, 
        maxit = 5,
@@ -203,27 +164,15 @@ mbased_finite_apollo <-
 
 ```{r, echo=FALSE}
 # ##### Missing data pattern of all simulations.
-# missing_pattern <- mbased_finite_apollo %>%
-#   map(~.x %>% .$data) %>%
-#   do.call("rbind", .) %>%
-#   md.pattern(rotate.names = TRUE)
-# 
-# plot_with_time <- plot(mbased_finite_apollo[[5]])
-# plot_with_time
-# stripplot_with_time <- stripplot(mbased_finite_apollo[[5]])
-# stripplot_with_time
-# 
-# test <- complete(mbased_finite_apollo[[5]], action = 3, include = TRUE)
-# test <- mbased_finite_apollo[[5]]
-# 
-# plot(mbased_finite_apollo[[5]])
-# stripplot(mbased_finite_apollo[[5]])
-
+plot_with_time <- plot(mbased_finite_apollo[[5]])
+plot_with_time
+stripplot_with_time <- stripplot(mbased_finite_apollo[[5]])
+stripplot_with_time
 ```
 
 ##Defining REM effects and preparing data for Cox function
 ```{r, echo=FALSE}
-##### Defining effects for the relational event model
+##### Defining effects for REM
 effects <- ~ -1 + reciprocity(scaling = ("std")) + indegreeSender() + outdegreeReceiver()
 
 ##### Function to get the statistics of the previously defined effects.
@@ -280,6 +229,13 @@ prepare_coxph_data <- function(statsObject, apollo) {
   combined$indegreeSender <- c(indegreeSender)
   combined$outdegreeReceiver <- c(outdegreeReceiver)
   
+  ## add same location
+  combined$s_ast <- ifelse(combined$sender > 16, 1, 0)
+  combined$r_ast <- ifelse(combined$receiver > 16, 1, 0)
+  combined$same_location <- ifelse(combined$s_ast == combined$r_ast, 1, 0)
+  combined$s_ast <- NULL
+  combined$r_ast <- NULL
+  
   return(combined)
 }
 ```
@@ -294,13 +250,15 @@ stats <- remstats(tie_effects = effects,
                   reh = true.reh)
 # use the function to create the correct format of the dataframe
 true.cox.set <- prepare_coxph_data(stats, apollo)
+
 # fit cox model 
 true.cox.fit <- coxph(Surv(time, status) ~ reciprocity + indegreeSender + 
-                        outdegreeReceiver, 
+                        outdegreeReceiver + same_location, 
                       data=true.cox.set)
 true <- coefficients(true.cox.fit)
 
 true.cox.fit
+BIC(true.cox.fit)
 ```
 
 ##Analysis on time (interpolated), actor 1 + 2 MI
@@ -316,7 +274,8 @@ Results1 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver +
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -339,7 +298,6 @@ Results1 <-
 Results1
 ```
 
-
 ```{r}
 Results2 <- 
   mbased_finite_apollo[11:20] %>% 
@@ -351,7 +309,8 @@ Results2 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender +
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -383,7 +342,8 @@ Results3 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -416,7 +376,8 @@ Results4 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -449,7 +410,8 @@ Results5 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -482,7 +444,8 @@ Results6 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -515,7 +478,8 @@ Results7 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -548,7 +512,8 @@ Results8 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -581,7 +546,8 @@ Results9 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -614,7 +580,8 @@ Results10 <-
               coxph(Surv(time, status) ~ 
                       reciprocity + 
                       indegreeSender + 
-                      outdegreeReceiver)) %>%
+                      outdegreeReceiver+
+                      same_location)) %>%
         pool(custom.t = ".data$b + .data$b / .data$m") %>% # pool coefficients 
         .$pooled %>% # extract table of pooled coefficients
           mutate(true = true, # add true
@@ -655,11 +622,12 @@ Results <- list(Results1,
 ##Save results
 ```{r}
 #saving Results
-save(Results, file = "TimeINT_A12_MI.RData")
+save(Results, file = "TimeINT_A12_MI_.RData")
 ```
 
 ##Percentage bias and average width
 ```{r}
+load("TimeINT_A12_MI.RData")
 ##### Adding percentage bias and average width to the Results
 #function for average width and percentage bias.
 AW <- function(df) df[["97.5 %"]] - df[["2.5 %"]]
@@ -676,36 +644,9 @@ Results_with_extra <- lapply(Results, function(df) {
 Reduce("+", Results_with_extra) / length(mbased_finite_apollo)
 
 ```
-```{r}
-##### Creating a list of all estimates for every statistic
-reciprocity <- Results %>%
-  map(~.x %>% .["reciprocity", ]) %>%
-  do.call("rbind", .)
 
-indegreeSender <- Results %>% 
-  map(~.x %>% .["indegreeSender", ]) %>% 
-        do.call("rbind", .)
 
-outdegreeReceiver <- Results %>% 
-  map(~.x %>% .["outdegreeReceiver", ]) %>% 
-        do.call("rbind", .)
-    
-##### A density plot of all estimates for every statistic
-stats <- list(outdegreeReceiver = outdegreeReceiver,
-              indegreeSender = indegreeSender,
-              reciprocity = reciprocity)
 
-for (stat_name in names(stats)) {
-  plot_data <- stats[[stat_name]]
-  plot <- ggplot(plot_data, aes(x = estimate)) + 
-    geom_density() + 
-    labs(x = paste(stat_name, "estimates"), y = "Density") + 
-    theme_classic()
-  
-  print(plot)
-}
-
-```
 
 
 
