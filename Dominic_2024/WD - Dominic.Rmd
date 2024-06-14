@@ -796,7 +796,7 @@ cox_sets_for_incomplete <- function(data) {
 ```
 
 
-```{r, , echo=FALSE}
+```{r, echo=FALSE, warning=FALSE}
 set.seed(123)
 # cox model on complete cases
 complete.case.fit <- mbased_finite_apollo_miss_cc %>% 
