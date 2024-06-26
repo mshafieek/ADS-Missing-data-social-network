@@ -24,18 +24,18 @@ for (pkg in packages_to_install) {
   }
 }
 
-library(purrr, warn.conflicts = FALSE)    # for functional programming
-library(furrr, warn.conflicts = FALSE)    # for functional futures
-library(magrittr, warn.conflicts = FALSE) # for pipes
-library(dplyr, warn.conflicts = FALSE)    # for data manipulation
-library(tibble, warn.conflicts = FALSE)     # for tibbles
-library(survival, warn.conflicts = FALSE) # for REM analysis
-library(tidyverse, warn.conflicts = FALSE)  
-library(tidyr, warn.conflicts = FALSE)
-library(igraph, warn.conflicts = FALSE)
-library(sna, warn.conflicts = FALSE)
-library(imputeTS, warn.conflicts = FALSE)
-library(stats, warn.conflicts = FALSE)
+library(purrr, warn.conflicts = FALSE)     # for functional programming
+library(furrr, warn.conflicts = FALSE)     # for functional futures
+library(magrittr, warn.conflicts = FALSE)  # for pipes
+library(dplyr, warn.conflicts = FALSE)     # for data manipulation
+library(tibble, warn.conflicts = FALSE)    # for tibbles
+library(survival, warn.conflicts = FALSE)  # for REM analysis
+library(tidyverse, warn.conflicts = FALSE) # tidyverse 
+library(tidyr, warn.conflicts = FALSE)     # tidyr
+library(igraph, warn.conflicts = FALSE)    # network graphs
+library(sna, warn.conflicts = FALSE)       # social network analysis
+library(imputeTS, warn.conflicts = FALSE)  # time interpolation
+library(stats, warn.conflicts = FALSE)     # for a range of model stats
 
 devtools::install_github("TilburgNetworkGroup/remify")
 devtools::install_github("gerkovink/mice@match_conditional_current") 
