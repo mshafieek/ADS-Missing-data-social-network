@@ -7,7 +7,6 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
-knitr::opts_knit$set(root.dir = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code")
 ```
 
 
@@ -18,7 +17,8 @@ Here we load all the packages.
 ```{r message=FALSE, warning=FALSE, include=FALSE}
 
 # The needed packages, constantly updated
-packages <- c("mice","purrr","furrr","dplyr","tibble","remify","remstats","relevent","sna","magrittr","survival","imputeTS","survival","tibble")
+packages <- c("mice","purrr","furrr","dplyr","tibble","remify","remstats","relevent","sna","magrittr"
+              ,"survival","imputeTS","survival","tibble","ggplot2")
 
  # library("devtools")
  # devtools::install_github("TilburgNetworkGroup/remify")
@@ -183,7 +183,6 @@ true_coefs_23
 true_coefs_24 <- coefficients(true.fit2)
 true_coefs_24
 
-
 ```
 
 
@@ -192,8 +191,6 @@ true_coefs_24
  <font size="0.1"> am puting these ***** in your ***** </font>
 
 ```{r echo=TRUE}
-
-set.seed(123)
 
 # Check how many unique dyads and actors are in the original dataset
 remify(Apollo, model = "tie") %>% dim() # 16 actors and 240 dyads
@@ -210,8 +207,6 @@ remify(Apollo[(base_indic),],model = "tie") %>% dim()
 # Split the dataset in 2. rest_Apollo can be amputed in whatever way and then combined with base_Apollo and arranged correctly.
 base_Apollo <- Apollo[base_indic,]
 rest_Apollo <- Apollo[-base_indic,]
-
-comb_Apollo <- rbind(base_Apollo,rest_Apollo) %>%  arrange(order)
 
 
 ```
@@ -289,10 +284,12 @@ ampute_dataset <- function(des_prop, patts, mechs, freqs = NULL, weights = NULL,
 MCAR.1 <- ampute_dataset(0.3,myPatterns,"MCAR")
 md.pattern(MCAR.1)
 
-# Test out the function with different frequencies for the missingness patterns
-MCAR.1_5 <- ampute_dataset(0.3,myPatterns,"MCAR",freqs = c(0.1,0.1,0.1,0.1,0.2,0.2,0.2))
+as.table(myPatterns[,1:3])
 
-md.pattern(MCAR.1_5[1:3])
+# Test out the function with different frequencies for the missingness patterns
+MCAR.1_5 <- ampute_dataset(0.3,myPatterns,"MCAR")
+
+md.pattern(MCAR.1_5[1:3],rotate.names = TRUE)
 
 ```
 
@@ -382,9 +379,9 @@ aimpute <- function(N,des_prop, patts, mechs, freqs = NULL, weights = NULL, type
   
 }
 
-
+L = 5
 # Test the function with MCAR and 2 simulations
-MCAR_Apollo <- aimpute(2, 0.3, myPatterns, "MCAR")
+MCAR_Apollo <- aimpute(L, 0.3, myPatterns, "MCAR")
 test_MICE_MCAR <- MCAR_Apollo$IMPs
 
 # As you can see, the imputation has no missing values
@@ -404,7 +401,9 @@ Plots waren daar wat plots
 convergence <- lapply(test_MICE_MCAR, plot)
 
 # Plot one of the convergence plots, chosen randomly. Done this multiple times to check convergence by eye
-convergence[1] 
+ind_conv <- sample(1:L,1)
+ind_conv
+convergence[ind_conv] 
 # Seems like most converged relatively well.
 
 ```
@@ -491,12 +490,33 @@ MAR.5_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (M
 
 
 ## Also test other types of missingness: LEFT & MID
-MAR.L_Apollo <- aimpute(K, 0.3, myPatterns, "MAR", types = "LEFT")
+#MAR.L_Apollo <- aimpute(K, 0.3, myPatterns, "MAR", types = "LEFT")
+MAR.L_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.L_Apollo.rds")
 
-MAR.M_Apollo <- aimpute(K, 0.3, myPatterns, "MAR", types = "MID")
+#MAR.M_Apollo <- aimpute(K, 0.3, myPatterns, "MAR", types = "MID")
+MAR.M_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.M_Apollo.rds")
 
 
 ## And finally test other frequencies for missingness patterns: mainly 1 missing & mainly 1+ missing
+
+
+
+### Change proportions to 0.1,0.2 and 0.4 (o.2 standard)
+#MCAR.2_Apollo <- aimpute(K, 0.2, myPatterns, "MCAR")
+MCAR.2_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MCAR.2_Apollo.rds")
+
+#MAR.2_Apollo <- aimpute(K, 0.2, myPatterns, "MAR")
+MAR.2_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.2_Apollo.rds")
+
+#MAR.4_Apollo <- aimpute(K, 0.4, myPatterns, "MAR")
+MAR.4_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.4_Apollo.rds")
+
+#MAR.2L_Apollo <- aimpute(K, 0.2, myPatterns, "MAR", types = "LEFT")
+MAR.2L_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.2L_Apollo.rds")
+
+#MAR.2M_Apollo <- aimpute(K, 0.2, myPatterns, "MAR", types = "MID")
+MAR.2M_Apollo <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.2M_Apollo.rds")
+
 
 
 ## Save everything!
@@ -505,9 +525,13 @@ MAR.M_Apollo <- aimpute(K, 0.3, myPatterns, "MAR", types = "MID")
 # saveRDS(MAR.1_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.1_Apollo.rds")
 # saveRDS(MAR.3_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.3_Apollo.rds")
 # saveRDS(MAR.5_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.5_Apollo.rds")
-saveRDS(MAR.L_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.L_Apollo.rds")
-saveRDS(MAR.M_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.M_Apollo.rds")
-
+# saveRDS(MAR.L_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.L_Apollo.rds")
+# saveRDS(MAR.M_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.M_Apollo.rds")
+# saveRDS(MCAR.2_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MCAR.2_Apollo.rds")
+# saveRDS(MAR.2_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.2_Apollo.rds")
+# saveRDS(MAR.4_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.4_Apollo.rds")
+ # saveRDS(MAR.2L_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.2L_Apollo.rds")
+ # saveRDS(MAR.2M_Apollo, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/Sims/MAR.2M_Apollo.rds")
 
 ### BEEP BOOP when done
 library(beepr)
@@ -540,20 +564,42 @@ MAR.3_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (
 #MAR.5_results <- get_MICE_results(MAR.5_Apollo$IMPs,K,true_coefs_24,formula_24)
 MAR.5_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.5_results.rds")
 
-MAR.L_results <- get_MICE_results(MAR.L_Apollo$IMPs,K,true_coefs_24,formula_24)
+#MAR.L_results <- get_MICE_results(MAR.L_Apollo$IMPs,K,true_coefs_24,formula_24)
 MAR.L_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.L_results.rds")
 
-MAR.M_results <- get_MICE_results(MAR.M_Apollo$IMPs,K,true_coefs_24,formula_24)
+#MAR.M_results <- get_MICE_results(MAR.M_Apollo$IMPs,K,true_coefs_24,formula_24)
 MAR.M_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.M_results.rds")
 
 
+### Now run with different proportions
+#MCAR.2_results <- get_MICE_results(MCAR.2_Apollo$IMPs,K,true_coefs_24,formula_24)
+MCAR.2_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MCAR.2_results.rds")
+
+#MAR.2_results <- get_MICE_results(MAR.2_Apollo$IMPs,K,true_coefs_24,formula_24)
+MAR.2_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.2_results.rds")
+
+#MAR.4_results <- get_MICE_results(MAR.4_Apollo$IMPs,K,true_coefs_24,formula_24)
+MAR.4_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.4_results.rds")
+
+#MAR.2L_results <- get_MICE_results(MAR.2L_Apollo$IMPs,K,true_coefs_24,formula_24)
+MAR.2L_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.2L_results.rds")
+
+#MAR.2M_results <- get_MICE_results(MAR.2M_Apollo$IMPs,K,true_coefs_24,formula_24)
+MAR.2M_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.2M_results.rds")
+
+
 ## Save all the results
-saveRDS(MCAR_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MCAR_results.rds")
-saveRDS(MAR.1_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.1_results.rds")
-saveRDS(MAR.3_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.3_results.rds")
-saveRDS(MAR.5_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.5_results.rds")
-saveRDS(MAR.L_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.L_results.rds")
-saveRDS(MAR.M_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.M_results.rds")
+# saveRDS(MCAR_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MCAR_results.rds")
+# saveRDS(MAR.1_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.1_results.rds")
+# saveRDS(MAR.3_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.3_results.rds")
+# saveRDS(MAR.5_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.5_results.rds")
+# saveRDS(MAR.L_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.L_results.rds")
+# saveRDS(MAR.M_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.M_results.rds")
+# saveRDS(MCAR.2_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MCAR.2_results.rds")
+# saveRDS(MAR.2_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.2_results.rds")
+# saveRDS(MAR.4_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.4_results.rds")
+# saveRDS(MAR.2L_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.2L_results.rds")
+# saveRDS(MAR.2M_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/MAR.2M_results.rds")
 
 
 ### BEEP BOOP when done
@@ -574,89 +620,240 @@ CCA Pounder: "Goddamn it Dutch, what other errands do you have us running for th
 
 ## For complete case analysis we also need to ampute the network 100 times, but NOT impute them with multiple imputation. 
 
-# Aimpute the dataset 100 times, then extract the amputed and imputed datasets separately
-MCAR.test <- aimpute(100,0.1,myPatterns,"MCAR")
-
-CCA_MCAR1 <- MCAR.test$AMPs
-MICE_MCAR1 <- MCAR.test$IMPs
-
-
-# Test CCA on 1 amputed network
-md.pattern(MCAR.1)
-
-CCA_riskset <- riskset_function(MCAR.1,statistics)
-
-CCA.fit <- coxph(formula = formula_24, data = CCA_riskset)
-CCA.coef <- coef(CCA.fit)
-
-CCA.fit
-CCA.coef
-
-## Run the model on all amputed datasets with CCA
-
-CCA1.fit <- future_map(CCA_MCAR1, ~ {    
-                            na.omit(.) %>%
-                            riskset_function(.,statistics) %$%
-                            coxph(formula = formula_24,.)
-                      })
-
-
-CCA.fit <- CCA_MCAR1 %>%
+# This function takes K elements of a list of amputed datasets and fits a model on each with CCA. It then averages its results and compares to true_coefs to assess whether valid inference is still possible after using MI.
+get_CCA_results <- function(amp_list,K,true_coefs,coxph_formula) {
+  
+  start_time <- Sys.time()
+  
+  # Get the coefficients per simulation
+  CCA.fit <- amp_list[1:K] %>%
   future_map(~.x %>%
                na.omit() %>%
                riskset_function(statistics) %$%
-               coxph(formula = formula_24,.))
-
-saveRDS(test_results2, file = "test_results2.rds")
-
-
-
-
-
-
-
-
-
-
-
-##### 
-
-CCA_results <- list()
-# Generate 100 dataframes
-for (i in 1:100) {
-  # Create a dataframe with columns of results from the cox models
-  df <- data.frame(
-    coef = CCA.fit[[i]]$coefficients,
-    se = coef(summary(CCA.fit[[i]]))[, "se(coef)"],
-    p = coef(summary(CCA.fit[[i]]))[, "Pr(>|z|)"],
-    true = true_coefs_24
-  )
-  rownames(df) <- c("reciprocity", "indegreeSender", "outdegreeReceiver","sameLoc")
-  # Append the dataframe to the list
-  CCA_results[[i]] <- df
+               coxph(formula = coxph_formula,.))
+  
+  CCA_results <- list()
+  for(i in 1:K){
+    cox <- CCA.fit[[i]]
+    
+    df <- data.frame(true = true_coefs_24,
+                     estimate = cox$coefficients,
+                     std.error = coef(summary(cox))[, "se(coef)"],
+                     p.value = coef(summary(cox))[, "Pr(>|z|)"])  %>%  
+              mutate(`2.5 %` = confint(cox)[,'2.5 %'],
+                     `97.5 %` = confint(cox)[,'97.5 %'],
+                    cov = `2.5 %` < true & true < `97.5 %`,          # coverage
+                    bias = abs(estimate - true),                          # raw bias
+                    PB = 100 * abs(bias/true),                       # percent bias
+                    AW = `97.5 %` -`2.5 %`)                          # average width
+                    
+    CCA_results[[i]] <- df
+  } 
+  
+  # Add all and divide by length to get the average results of the entire mids list.
+  avg_results <- Reduce("+", CCA_results) / K
+  
+  # Print computational time
+  end_time <- Sys.time()
+  print(end_time - start_time)
+  
+  # Return the results for all sims and the averaged results in 1 named list
+  return(list(all = CCA.fit,avg = avg_results))
+  
 }
-# average the results across all simulations
-average <- CCA_results %>%
-  map(~.x %>%
-        mutate(bias = coef - true) %>% # bias
-        select(true, coef, se, p,
-               bias)) %>%
-  Reduce("+", .) / length(CCA_MCAR1)
 
 
- blabla <-  future_map(MICE_MCAR1[1:5], ~ {    # Use future to run the following code on the first K mids:
-  complete(.x,"all") %>%  # Get all complete datasets
-    future_map(~.x %>%    # Run the following code on each imputed complete dataset:
-      riskset_function(.,statistics) %$%        # Use the function to get the complete riskset of the REH data
-        coxph(formula = formula_24, data = .)# Fit the Cox Proportional Hazards model on it with the given formula.
-      )  %>%
-    pool(custom.t = ".data$b + .data$b / .data$m") %>% # Pool the results from every dataset in the mids together
-  .$pooled
- })
+
+
+## Run the model on all amputed datasets with CCA
+
+#CCA_MCAR.2_results <- get_CCA_results(MCAR.2_Apollo$AMPs,K,true_coefs_24,formula_24)
+ CCA_MCAR.2_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MCAR.2_results.rds")
+
+#CCA_MAR.1_results <- get_CCA_results(MAR.1_Apollo$AMPs,K,true_coefs_24,formula_24)
+ CCA_MAR.1_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.1_results.rds")
+
+#CCA_MAR.2_results <- get_CCA_results(MAR.2_Apollo$AMPs,K,true_coefs_24,formula_24)
+CCA_MAR.2_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.2_results.rds")
+
+#CCA_MAR.3_results <- get_CCA_results(MAR.3_Apollo$AMPs,K,true_coefs_24,formula_24)
+CCA_MAR.3_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.3_results.rds")
+
+#CCA_MAR.4_results <- get_CCA_results(MAR.4_Apollo$AMPs,K,true_coefs_24,formula_24)
+CCA_MAR.4_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.4_results.rds")
+
+#CCA_MAR.5_results <- get_CCA_results(MAR.5_Apollo$AMPs,K,true_coefs_24,formula_24)
+CCA_MAR.5_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.5_results.rds")
+
+#CCA_MAR.2L_results <- get_CCA_results(MAR.2L_Apollo$AMPs,K,true_coefs_24,formula_24)$avg
+CCA_MAR.2L_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.2L_results.rds")
+  
+#CCA_MAR.2M_results <- get_CCA_results(MAR.2M_Apollo$AMPs,K,true_coefs_24,formula_24)
+CCA_MAR.2M_results <- readRDS(file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.2M_results.rds")
+
+## save results
+
+# saveRDS(CCA_MCAR.2_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MCAR.2_results.rds")
+# saveRDS(CCA_MAR.1_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.1_results.rds")
+# saveRDS(CCA_MAR.2_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.2_results.rds")
+# # saveRDS(CCA_MAR.3_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.3_results.rds")
+# # saveRDS(CCA_MAR.4_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.4_results.rds")
+# # saveRDS(CCA_MAR.5_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.5_results.rds")
+# saveRDS(CCA_MAR.2L_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.2L_results.rds")
+# saveRDS(CCA_MAR.2M_results, file = "C:/Users/kaspe/Documents/Applied Data Science (Master)/Thesis 2024/Code/Results/CCA_MAR.2M_results.rds")
+
+### BEEP BOOP when done
+for(i in 1:10){
+  beep()
+}
+
+
 
 
 ```
 
+
+### Extract results
+
+
+```{r echo=TRUE}
+
+# Function to extract the results into a single table with the relevant statistics and measures
+extract_res <- function(results){
+  if(length(results) == 2){ ## MICE results
+    
+    outcome <- results$avg %>% mutate(Statistic = c("Reciprocity" , "Indegree Sender", "Outdegree Receiver", "Same Location"), 
+                             Estimate = estimate, SE = std.error,
+                             bias = abs(estimate - true),
+                             PB = 100 * abs(bias/true)) %>% 
+                      select(c(Statistic,Estimate,SE,p.value,bias,PB,cov,AW))
+  } else { # CCA results
+     outcome <- results %>% mutate(Statistic = c("Reciprocity" , "Indegree Sender", "Outdegree Receiver", "Same Location"), 
+                             Estimate = estimate, SE = std.error,
+                             bias = abs(estimate - true),
+                             PB = 100 * abs(bias/true)) %>% 
+                      select(c(Statistic,Estimate,SE,p.value,bias,PB,cov,AW))
+  }
+  return(outcome)
+}
+
+## Extract all results
+
+# Mice
+Mcar <- extract_res(MCAR.2_results)
+Mar.1 <- extract_res(MAR.1_results)
+Mar.2 <- extract_res(MAR.2_results)
+Mar.3 <- extract_res(MAR.3_results)
+Mar.4 <- extract_res(MAR.4_results)
+Mar.5 <- extract_res(MAR.5_results)
+Mar.L <- extract_res(MAR.2L_results)
+Mar.M <- extract_res(MAR.2M_results)
+
+# CCA
+CCA.mcar <- extract_res(CCA_MCAR.2_results)
+CCA.1 <- extract_res(CCA_MAR.1_results)
+CCA.2 <- extract_res(CCA_MAR.2_results)
+CCA.3 <- extract_res(CCA_MAR.3_results)
+CCA.4 <- extract_res(CCA_MAR.4_results)
+CCA.5 <- extract_res(CCA_MAR.5_results)
+CCA.L <- extract_res(CCA_MAR.2L_results)
+CCA.M <- extract_res(CCA_MAR.2M_results)
+
+
+## Get the true results in a nice table
+true_results <- data.frame(Statistic = c("Reciprocity" , "Indegree Sender", "Outdegree Receiver", "Same Location"),
+                     Estimate = true.fit$coefficients,
+                     SE = coef(summary(true.fit))[, "se(coef)"],
+                     p.value = coef(summary(true.fit))[, "Pr(>|z|)"]) 
+true_results
+
+```
+
+## Compare results
+
+```{r echo=TRUE}
+
+## Add all results in a single dataframe using the function below
+results_DF_prop <- results_DF_mech <- data.frame(Stat = row.names(true_results), Test = "True", Mech = NA, Prop = 0, c(true_results[,2:4]),bias = NA, PB = NA, CR = NA, AW = NA)
+
+
+add_results <- function(DF,statistic,mech){
+  
+  if(mech){
+    DF[nrow(DF)+1,] <- c(statistic,"MI","MCAR",0.2,c(Mcar[statistic,2:8]))
+    DF[nrow(DF)+1,] <- c(statistic,"MI","MAR",0.2,c(Mar.2[statistic,2:8]))
+    DF[nrow(DF)+1,] <- c(statistic,"MI","MAR.M",0.2,c(Mar.M[statistic,2:8]))
+    
+    DF[nrow(DF)+1,] <- c(statistic,"CCA","MCAR",0.2,c(CCA.mcar[statistic,2:8]))
+    DF[nrow(DF)+1,] <- c(statistic,"CCA","MAR",0.2,c(CCA.2[statistic,2:8]))
+    DF[nrow(DF)+1,] <- c(statistic,"CCA","MAR.M",0.2,c(CCA.M[statistic,2:8]))
+  }
+  
+  else {
+  DF[nrow(DF)+1,] <- c(statistic,"MI","MAR",0.1,c(Mar.1[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"MI","MAR",0.2,c(Mar.2[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"MI","MAR",0.3,c(Mar.3[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"MI","MAR",0.4,c(Mar.4[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"MI","MAR",0.5,c(Mar.5[statistic,2:8]))
+  
+  DF[nrow(DF)+1,] <- c(statistic,"CCA","MAR",0.1,c(CCA.1[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"CCA","MAR",0.2,c(CCA.2[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"CCA","MAR",0.3,c(CCA.3[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"CCA","MAR",0.4,c(CCA.4[statistic,2:8]))
+  DF[nrow(DF)+1,] <- c(statistic,"CCA","MAR",0.5,c(CCA.5[statistic,2:8]))
+  }
+  
+  return(DF)
+}
+
+# DF for prop results
+for (stat in row.names(true_results)) {
+  results_DF_prop <- add_results(results_DF_prop,stat,FALSE)
+}
+results_DF_prop <- results_DF_prop[-c(1:4),]
+
+# DF for mechanism results
+for (stat in row.names(true_results)) {
+  results_DF_mech <- add_results(results_DF_mech,stat,TRUE)
+}
+results_DF_mech <- results_DF_mech[-c(1:4),]
+
+# Plot PB vs Missingness Proportion for each statistic
+plot_PB.Prop <- ggplot(results_DF_prop, aes(x = Prop, y = PB, colour = Test)) +
+  geom_line() +
+  geom_hline(aes(yintercept = 5), linetype = "dotted") +
+  labs(title = "Percent Bias (PB) vs Missingness Proportion for each statistic. PB should be <5%",y = "PB",x="Missingness Proportion") +
+  facet_wrap(. ~ Stat) +
+  scale_y_log10(breaks = c(0,1,5,10,25,100)) +
+  theme_bw()
+
+my_theme <- theme(title = element_text(size=10), axis.title=element_text(size=12)) 
+
+plot_PB.Prop + my_theme
+
+
+
+
+```
+
+
+## Plot PB vs Mechanisms
+
+```{r echo=TRUE}
+
+# Plot PB vs Missingness Proportion for each statistic
+plot_PB.Mech <- ggplot(results_DF_mech, aes(x = Mech, y = PB, colour = Test)) +
+  geom_point() +
+  geom_hline(aes(yintercept = 5), linetype = "dotted") +
+  labs(title = "Percent Bias (PB) vs Missingness Proportion for each statistic. PB should be <5%",y = "PB",x="Missingness Proportion") +
+  facet_wrap(. ~ Stat) +
+  scale_y_log10(breaks = c(0,1,5,10,25,100)) +
+  theme_bw()
+
+plot_PB.Mech + my_theme
+
+
+```
 
 
 
